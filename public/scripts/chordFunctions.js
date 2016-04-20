@@ -5,8 +5,11 @@ function prepPage(){
 	$( "#join" ).submit(function( event ) {
 	  var ip = $("#join :input")[0].value;
 	  var port = $("#join :input")[1].value;
-	  $.post( "http://"+ip+":"+port+"/peerRequests/join", function( data ) {});
+	  var peer = {ip : ip, port : port};
+	  $.post( "peerRequests/join", peer, function( data ) {});
 	  event.preventDefault();
+	  $(".leave").removeClass("hidden");
+		$(".joinForm").addClass("hidden");
 	});
 
 	$("#stabilize").click(function(){
@@ -17,6 +20,13 @@ function prepPage(){
 		$.post( "peerRequests/fixfingers", function( data ) {});
 	});
 
+	$("#succ").click(function(){
+		window.location=$("#succ a").attr("href");
+	});
+
+	$("#pred").click(function(){
+		window.location=$("#pred a").attr("href");
+	});
 
 
 	$( "#findID" ).submit(function( event ) {
