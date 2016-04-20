@@ -3,7 +3,6 @@ var https = require('https');
 
 const crypto = require('crypto');
 
-var nano = require('nano')('http://localhost:5984');
 
 var nullPeer = { id : "null", ip : "null", port: "null" };
 
@@ -12,11 +11,6 @@ function peer(port, succ_port, pred_port) {
   var _predecessor;
   var _fingerTable = [];
   var _hashLength = 3;
-  var _resourceList = [];
-  var _kBackups = 3;
-
-  nano.db.create("port" + port);
-  var dbOnPort = nano.db.use("port" + port);
 
   function hashId(id){
     if (process.env.NOHASHING == 'true') {
@@ -79,11 +73,7 @@ function peer(port, succ_port, pred_port) {
   function leave(){
     deleteRequest(_successor, '/peerRequests/predecessor' , function(response){
           putRequest(_predecessor, '/peerRequests/successor', _successor , function(response){
-                var i = _resourceList.length;
-
-                while(i--){
-                  postRequest(_successor, '/peerRequests/registerPhoton', _resourceList[i], function(response){ });
-                }
+                
 
                 setSuccessor(nullPeer);
                 _predecessor = nullPeer;
@@ -296,6 +286,46 @@ function peer(port, succ_port, pred_port) {
 
   }
 
+  function httpRequest(peer, link, content, callback, method, errorCallback, tries) {
+    if(typeof tries !== 'undefined'){
+      tries = 3;
+    }
+    var post_options = {
+          host : peer.ip,
+          port: peer.port,
+          path: link,
+          method: method,
+          headers: {
+              'content-type': 'application/json',
+          }
+    };
+
+    // perform request and handle response
+
+    var post_req = http.request(post_options, function(res) {
+        var response = "";
+        res.on('data', function(chunk) {
+          response += chunk;
+        });
+
+        res.on('end', function() {
+          callback(response);
+          tries = -1;
+        });
+    });
+    post_req.write(JSON.stringify( content ));
+
+    post_req.on('error', function(err) {
+      if(typeof errorCallback !== 'undefined' && tries == 0){
+        errorCallback();
+      }else{
+        httpRequest(peer, link, content, callback, method, errorCallback, (tries--));
+      }
+    });
+
+    post_req.end();
+  }
+
   /////////////////////////
   ///// FINGERTABLES //////
   /////////////////////////
@@ -337,10 +367,6 @@ function peer(port, succ_port, pred_port) {
         i = 1;
       }
       if (i > _hashLength*4) {
-        setTimeout(function(){
-
-          putRequest(_successor, '/peerRequests/resourceList', {}, function(response){});
-        }, 3000);
         return;
       }
     
@@ -430,307 +456,9 @@ function peer(port, succ_port, pred_port) {
   /////////////////////////
 
 
-  function registerPhoton(photon){
-    var hashedID = hashId(photon.photonId);
-    console.log("hashed id: " + hashedID)
-    find_successor(hashedID, function(data){
-      console.log(" Successor : " + JSON.stringify(data) + " this: " + JSON.stringify(_this));
-      var index = listContains(photon, _resourceList);
-      if(_this.id == data.id){
-
-        if(index == -1){
-
-          _resourceList.push(photon);
-        }
-
-      }else{
-
-        
-
-        var content = {peer : _this, ithPeer : 1, keys : [photon.photonId]}
-        putRequest(data, '/peerRequests/updateBackup', content , function(response){
-          if(index != -1){
-
-            _resourceList.pop(_resourceList[index]);
-          }
-
-          postRequest(data, '/peerRequests/registerPhoton', photon , function(response){});
-      });
-
-      }
-    });
-
-
-  }
-
-  function listContains(object, list){
-    var i = list.length;
-    while(i--){
-      if(list[i].photonId == object.photonId) break;
-    }
-    return i;
-  }
-
-  function getResourceList(){
-    return _resourceList;
-  }
-
-  function moveResourceKeys(){
-    var i = _resourceList.length;
-    while(i--){
-      registerPhoton(_resourceList[i]);
-    }
-  }
-
-  function find_resource(id, callback){
-
-    find_successor(hashId(id), callback);
-  }
-
-  function httpRequest(peer, link, content, callback, method, errorCallback, tries) {
-    if(typeof tries !== 'undefined'){
-      tries = 3;
-    }
-    var post_options = {
-          host : peer.ip,
-          port: peer.port,
-          path: link,
-          method: method,
-          headers: {
-              'content-type': 'application/json',
-          }
-    };
-
-    // perform request and handle response
-
-    var post_req = http.request(post_options, function(res) {
-        var response = "";
-        res.on('data', function(chunk) {
-          response += chunk;
-        });
-
-        res.on('end', function() {
-          callback(response);
-          tries = -1;
-        });
-    });
-    post_req.write(JSON.stringify( content ));
-
-    post_req.on('error', function(err) {
-      if(typeof errorCallback !== 'undefined' && tries == 0){
-        errorCallback();
-      }else{
-        httpRequest(peer, link, content, callback, method, errorCallback, (tries--));
-      }
-    });
-
-    post_req.end();
-  }
-
-
-  function logResourceList(){
-    var i = _resourceList.length;
-    while(i--){
-      var host = "https://api.spark.io";
-      var base = "/v1/devices/"+ _resourceList[i].photonId+"/";
-      var link = base + "light?access_token="+ _resourceList[i].accessToken;
-      var link2 = base + "diode?access_token="+ _resourceList[i].accessToken;
-      var photonId = _resourceList[i].photonId;
-
-      getRequestOut(link, function(response){
-        var lightData = JSON.parse(response);
-        getRequestOut(link2, function(reponse){
-          var diodeData = JSON.parse(reponse);
-          logResourceData(lightData.result, diodeData.result, photonId);
-        });
-      });
-        //"/v1/devices/"+ photon.photonId+"/light?access_token="+ photon.accessToken
-    }
-  }
-
-
-  function getResourceData(callback, i){
-    
-    var keys = {keys : []};
-    var i = _resourceList.length;
-    var returnValue = { resourceList : []};
-    while(i--){
-      keys.keys.push("dataId" + _resourceList[i].photonId);
-    }
-    dbOnPort.fetch(keys, function(err, body){
-      var values = body.rows;
-      var returnValue = {resourceList : []};
-
-      i = values.length;
-
-      while(i--){
-        var tempDoc = values[i].doc;
-        delete tempDoc['_rev'];
-        var id = tempDoc._id;
-
-        id = id.slice(6, id.length);
-
-        delete tempDoc['_id']
-
-        tempDoc.id = id;
-
-        returnValue.resourceList.push(tempDoc);
-      }
-      callback(returnValue);
-    });
-  }
-
-  function getResourceDataFiltered(timeStamp, callBack){
-    getResourceData(function(response){
-      var data = response;
-      var i = data.resourceList.length;
-      var tempValue = data.resourceList;
-
-      var returnValue = {resourceList : []};
-      for(var resource in tempValue){
-
-        var returnResource = {id : tempValue[resource].id,
-                              timeStamps : [],
-                              lightData : [],
-                              diodeData : []};
-
-        
-
-        var timeStamps = tempValue[resource].timeStamps;
-        var lightData = tempValue[resource].lightData;
-        var diodeData = tempValue[resource].diodeData;
-
-        var i = timeStamps.length;
-
-        while(i--){
-          if(timeStamps[i] <= timeStamp){
-            break;
-          }
-        }
-        returnResource.timeStamps = timeStamps.slice((i+1));
-        returnResource.lightData = lightData.slice((i+1));
-        returnResource.diodeData = diodeData.slice((i+1));
-        returnValue.resourceList.push(returnResource);
-      }
-      callBack(returnValue);
-
-
-    });
-  }
-
-  function logResourceData(lightData, diodeData, dataId){
-
-     dbOnPort.get("dataId"+dataId, function(err, body){
-      if(err || typeof body == 'undefined'){
-        body = {
-          lightData : [],
-          diodeData : [],
-          timeStamps : []
-        }
-      }
-
-      body.lightData.push(lightData);
-      body.diodeData.push(diodeData);
-      body.timeStamps.push(new Date().getTime());
-      dbOnPort.insert(body, "dataId"+dataId);
-
-    }); 
-  }
-
-  function logResourceDataLists(lightData, diodeData, timeStamps, dataId){
-
-     dbOnPort.get("dataId"+dataId, function(err, body){
-      if(err || typeof body == 'undefined'){
-        body = {
-          lightData : [],
-          diodeData : [],
-          timeStamps : []
-        }
-      }
-      body.lightData = body.lightData.concat(lightData);
-      body.diodeData = body.diodeData.concat(diodeData);
-      body.timeStamps = body.timeStamps.concat(timeStamps);
-      dbOnPort.insert(body, "dataId"+dataId);
-
-    }); 
-  }
-
-  function calculateLatestTimeStamp(keys, callBack){
-    dbOnPort.fetch(keys, function(err, body){
-      if(err || typeof body == 'undefined'){
-        callBack(0);
-        return;
-      }
-      var values = body.rows;
-      var i = values.length;
-      var maxLength = 0;
-      while(i--){
-        var doc = values[i].doc;
-        if(doc != null){
-          var timeStamps = values[i].doc.timeStamps;
-          maxLength = Math.max(timeStamps[timeStamps.length-1], maxLength);
-        }
-      }
-      callBack(maxLength);
-    });
-  }
-
-  function updateBackup(body, callBack){
-    body.ithPeer--;
-    if(body.peer.id == _this.id){
-      callBack();
-      return;
-    }
-    
-    if(body.ithPeer > 0 && body.peer.id != _successor.id){
-      putRequest(_successor, '/peerRequests/updateBackup', body , function(response){});
-    }
-
-    calculateLatestTimeStamp(body, function(latestSeenTimeStamp){ 
-
-      getRequest(body.peer, '/peerRequests/resourceTable/'+latestSeenTimeStamp, function(response){
-        var backupData = JSON.parse(response);
-        var resourceList = backupData.resourceList;
-        var i = resourceList.length;
-        while(i--){
-          var lightData = resourceList[i].lightData;
-          var diodeData = resourceList[i].diodeData;
-          var timeStamps = resourceList[i].timeStamps;
-          var dataId = resourceList[i].id;
-
-          if(timeStamps.length == 0){
-            break;
-          }
-          logResourceDataLists(lightData, diodeData, timeStamps, dataId);
-        }
-        callBack();
-      });
-    });
-
-  }
-
-  function backupSuccessors(){
-    if(_successor.id == "null" ){
-      return;
-    }
-
-    if(_resourceList.length == 0){
-      return;
-    }
-    var keys =  [];
-    var i = _resourceList.length;
-    while(i--){
-      keys.push("dataId" + _resourceList[i].photonId);
-    }
-    var data = {peer : _this, ithPeer : _kBackups, keys : keys}
-    putRequest(_successor, '/peerRequests/updateBackup', data , function(response){});
-  }
-
   if(process.env.STABILIZE == 'ON'){
     setInterval(stabilize, 1000);
     setInterval(fix_fingers, 1000);
-    setInterval(logResourceList, 5000);
-    setInterval(backupSuccessors, 10000);
   }
 
 
@@ -739,7 +467,6 @@ function peer(port, succ_port, pred_port) {
   return {
       find_successor : find_successor,
       find_predecessor : find_predecessor,
-      find_resource : find_resource,
       join : join,
       get_successor : get_successor,
       get_predecessor : get_predecessor,
@@ -751,13 +478,7 @@ function peer(port, succ_port, pred_port) {
       get_this : get_this,
       getFingertable : getFingertable,
       updateFingerTable : updateFingerTable,
-      fix_fingers : fix_fingers,
-      registerPhoton : registerPhoton,
-      getResourceList : getResourceList,
-      moveResourceKeys : moveResourceKeys,
-      getResourceData : getResourceData,
-      getResourceDataFiltered: getResourceDataFiltered,
-      updateBackup : updateBackup
+      fix_fingers : fix_fingers
     }
 
 

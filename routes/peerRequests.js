@@ -49,20 +49,6 @@ router.get('/find_successor/:id*', function(req, res, next) {
   });
 });
 
-router.get('/find_resource/:id*', function(req, res, next) {
-  var peer = req.app.get('peer');
-  var id = req.params.id;
-
-
-
-  res.setHeader('Content-Type', 'application/json');
-
-  peer.find_resource(id, function(json){
-    res.set("Connection", "close");
-    res.send(JSON.stringify(json));
-  });
-
-});
 
 router.get('/fingertable', function(req, res, next) {
   var peer = req.app.get('peer');
@@ -126,65 +112,6 @@ router.post('/updateFingerTable', function(req, res, next) {
 
   peer.updateFingerTable(body.peer, body.i);
   res.send(JSON.stringify({status: "ok"}));
-});
-
-router.post('/registerPhoton', function(req, res, next) {
-  var peer = req.app.get('peer');
-  var body = req.body;
-
-  peer.registerPhoton(body);
-
-  res.send(JSON.stringify({status: "ok"}));
-});
-
-router.get('/resourceList', function(req, res, next){
-  var peer = req.app.get('peer');
-  res.send(JSON.stringify({resourceList : peer.getResourceList()}));
-});
-
-router.put('/resourceList', function(req, res, next){
-  var peer = req.app.get('peer');
-  peer.moveResourceKeys();
-  res.send(JSON.stringify({status : "ok"}));
-});
-
-
-router.put('/updateBackup', function(req, res, next){
-  var peer = req.app.get('peer');
-  var body = req.body;
-
-  peer.updateBackup(body, function(){
-   res.send(JSON.stringify({status : "OK"}));
-  });
-
-
-});
-
-router.get('/resourceTable', function(req, res, next) {
-  var peer = req.app.get('peer');
-
-  var id = req.params.id;
-
-
-  res.set("Connection", "close");
-  res.setHeader('Content-Type', 'application/json');
-
-  peer.getResourceData(function(json){
-    res.send(JSON.stringify(json));
-  });
-});
-
-router.get('/resourceTable/:timeStamp*', function(req, res, next) {
-  var peer = req.app.get('peer');
-  var timeStamp = req.params.timeStamp;
-  
-
-  res.set("Connection", "close");
-  res.setHeader('Content-Type', 'application/json');
-  
-  peer.getResourceDataFiltered(timeStamp, function(json){
-    res.send(JSON.stringify(json));
-  });
 });
 
 

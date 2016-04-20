@@ -1,5 +1,56 @@
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+html, body {
+	height: 100%;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+h3{
+	font-size: 25px;
+}
+
+
+
 body {
-  padding: 50px;
+  padding: 0px;
+  margin: 0px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
@@ -8,10 +59,37 @@ a {
 }
 
 .fingerTable{
+	color: white;
 	position: absolute;
-	top: 90px;
-	left: 400px;
+	right: 0px;
+	bottom: 0px;
+	background-color: #808080;
+	border-left: 1px solid black;
+	border-top: 1px solid black;
+	padding: 10px;
 }
+
+.fingerTable table {
+	margin-top: 10px;
+}
+
+.fingerTable table tr td:nth-child(1){
+	width: 90px;
+}
+
+.fingerTable table tr td:nth-child(2){
+	width: 80px;
+}
+
+.fingerTable table tr td:nth-child(3){
+	width: 60px;
+}
+
+.fingerTable table tr td:nth-child(4){
+	width: 37px;
+}
+
+
 .graph{
 	position: absolute;
 	width: 480px;
@@ -19,3 +97,129 @@ a {
 	top: 0px; 
 	left: 700px;
 }
+
+.header
+{
+	position: relative;
+	top: 0px;
+	width: 100%;
+	height: 90px;
+	background-color: #000000;
+	color: white;
+
+}
+
+.peerInformation 
+{
+	position: relative;
+	width: 33.33333%;
+	height: 90px;
+	line-height: 90px;
+
+	background-repeat: no-repeat;
+
+}
+
+
+#pred
+{
+	float: left;
+	background-image: url('../graphics/leftArrow.png');
+	background-position: left center;
+}
+
+#succ
+{
+	float: right;
+	background-image: url('../graphics/rightArrow.png');
+	background-position: right center;
+
+}
+
+#thisPeer
+{
+	float: left;
+
+}
+
+.peerTitle
+{
+	font-size: 30px;
+	color: white;
+}
+
+.peerTitle p{
+	text-align: center;
+}
+
+#pred .peerTitle a{
+	margin-left: 90px;
+	font-size: 20px;
+}
+
+#succ .peerTitle a{
+	float:right;
+	margin-right: 90px;
+	font-size: 20px;
+}
+
+
+
+a:hover, a:visited, a:link, a:active
+{
+    text-decoration: none;
+    color: inherit;
+}
+
+.leftBar
+{
+	background-color: #808080;
+	border-right: 1px solid black;
+	width: 140px;
+	padding: 10px;
+	height: -moz-calc(100% - 110px);
+    height: -webkit-calc(100% - 110px);
+    height: calc(100% - 110px);
+}
+
+.joinForm 
+{
+	width: 140px;
+	line-height: 20px;
+}
+
+.bottomOfBar
+{
+	position: absolute;
+	bottom: 10px;
+	color: white;
+}
+
+.action input
+{
+	float: right;
+}
+
+#join .input input
+{
+	width: 90px;
+	float: right;
+}
+
+#join p
+{
+	float: left;
+}
+
+.leave input
+{
+	width: 140px;
+}
+
+.hidden
+{
+	display: none;
+}
+
+
+
