@@ -1,0 +1,105 @@
+extends layout
+
+
+block content
+
+  h1 #{thisPeer.id}
+  .peerInformation(id="pred")
+    h2 Predecessor
+    .id #{pred.id}
+    .ip #{pred.ip}
+    .port #{pred.port}
+    .link 
+      a(href="http://#{pred.ip}:#{pred.port}") Click here
+
+  .peerInformation(id="succ")
+    h2 successor
+    .id #{succ.id}
+    .ip #{succ.ip}
+    .port #{succ.port}
+    .link 
+      a(href="http://#{succ.ip}:#{succ.port}") Click here
+
+  .joinForm
+    form(id="join")
+      .ipInput
+        p Ip:
+        input(type="text", name="ip", value="localhost")
+      .portInput
+        p Port:
+        input(type="text", name="port", value="4000")
+      .action
+        input(type="submit", value="Join Peer")
+
+  .stabilize
+      input(type="submit" value="stabilize" id="stabilize")
+
+  .fixfingers
+      input(type="submit" value="fixfingers" id="fixfingers")
+
+  .findID
+    form(id="findID")
+      .inputId
+        p Search for successor:
+        input(name="id")
+      .action
+        input(type="submit", value="SEARCH")
+    .findIDResult
+
+  .searchID
+    form(id="searchID")
+      .inputId
+        p Search for resource:
+        input(name="id")
+      .action
+        input(type="submit", value="SEARCH")
+    .searchIDResult
+
+  .leave
+    input(type="submit" value="leave ring" id="leave")
+
+  .fingerTable
+    table
+      tr
+        td FINGERID
+        td IP
+        td PORT
+        td ID
+      for entry in fingerTable
+        - if(typeof(entry) !== 'undefined'){
+          tr
+            td #{entry.fingerID}
+            td #{entry.ip}
+            td #{entry.port}
+            td #{entry.id}
+        - }
+
+  .photon
+    form(id="photonDevice")
+       .inputId
+         p Photon ID:
+         input(name="id", value="420031000447343337373738")
+       .inputAccessToken
+         p Access token:
+         input(name="accessToken", value="f39e46cd03923232f0f37d51ecbf2a11c85c2cde")
+       .button
+         input(type="submit", value="Register photon")
+  .resourceList
+    h3 ResourceList
+    table
+       tr
+         td Photon Id
+         td Access token
+         td Diode Status
+         td Light Status
+       - if(resourceList.length > 0){
+       for entry in resourceList
+         tr
+           td #{entry.photonId}
+           td #{entry.accessToken}
+           td updating
+           td updating
+       - }
+  .graph(id="graph")
+
+
