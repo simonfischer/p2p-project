@@ -51,5 +51,17 @@ block content
             td #{entry.port}
             td #{entry.id}
         - }
+  .successorList
+    h3 SuccessorList
+    table
+      tr
+        td N
+        td ID
+      each val, index in successorList
+        - if(typeof(val) !== 'undefined'){
+          tr
+            td #{index}
+            td #{val.id}
+        - }
 
 

@@ -11,6 +11,8 @@ function peer(port, succ_port, pred_port) {
   var _predecessor;
   var _fingerTable = [];
   var _hashLength = 3;
+  var _successorList = [];
+  var _maxSuccessors = 3;
 
   function hashId(id){
     if (process.env.NOHASHING == 'true') {
@@ -106,7 +108,7 @@ function peer(port, succ_port, pred_port) {
       getRequest(closestPreceedingFinger(id), '/peerRequests/find_successor/'+id, function(response){
             callback(JSON.parse(response));
       }, function(){
-        getRequest(_successor, '/peerRequests/find_successor/'+id, function(response){
+        sucessorGetRequest('/peerRequests/find_successor/'+id, function(response){
           callback(JSON.parse(response));
         });
       });
@@ -149,6 +151,16 @@ function peer(port, succ_port, pred_port) {
              (_predecessor.id > _this.id && (peer.id > _predecessor.id || peer.id < _this.id))) {
       _predecessor = peer;
     }
+
+    else{
+
+      getRequest(_predecessor, '/peerRequests/find_successor/'+_this.id, function(response){}, function(){
+        _predecessor = peer;
+      });
+
+    }
+
+
   }
 
   var joined = true
@@ -158,7 +170,7 @@ function peer(port, succ_port, pred_port) {
     getRequest(peer, '/peerRequests/find_successor/'+_this.id, function(response){
 
             setSuccessor(JSON.parse(response));     
-            getRequest(_successor, '/peerRequests/find_predecessor/'+_successor.id, function(response){
+            sucessorGetRequest('/peerRequests/find_predecessor/'+_successor.id, function(response){
               _predecessor = JSON.parse(response);
               
               initFingertable();
@@ -172,6 +184,7 @@ function peer(port, succ_port, pred_port) {
 
   function stabilize() {
     var tempSuccessor = _successor
+
     if (!joined) {
       return
     }
@@ -196,7 +209,42 @@ function peer(port, succ_port, pred_port) {
           setSuccessor(tempSuccessor);
         });
       }
+    }, function(){
+      console.log("error in get request trying to stabilize");
     });
+    fixSuccessorList();
+  }
+
+
+  var currentSuccessor = 0;
+  function fixSuccessorList(){
+    if(_successor.id == _this.id){
+      return;
+    }
+    if(currentSuccessor == 0){
+      // ask our successessor for his successor
+       sucessorGetRequest('/peerRequests/successor', function(response){
+        _successorList[currentSuccessor] = JSON.parse(response);
+        currentSuccessor = (currentSuccessor + 1)%_maxSuccessors;
+       });
+
+    }else if (typeof _successorList[currentSuccessor-1] !== 'undefined'){
+      // ask successor list to currentSuccessor - 1
+      getRequest(_successorList[currentSuccessor-1], '/peerRequests/successor', function(response){
+
+        _successorList[currentSuccessor] = JSON.parse(response);
+
+        currentSuccessor = (currentSuccessor + 1)%_maxSuccessors;
+        
+       }, function(){
+        currentSuccessor = 0;
+       });
+    }
+    
+  }
+
+  function getSuccessorList(){
+    return _successorList;
   }
 
   function fix_fingers() {
@@ -208,7 +256,7 @@ function peer(port, succ_port, pred_port) {
     var i = Math.floor(Math.random() * (_fingerTable.length - 1)) + 1;
     ith_finger_start = fingerStart(i);
 
-    getRequest(_successor, '/peerRequests/find_successor/'+ith_finger_start, function(response){
+    sucessorGetRequest('/peerRequests/find_successor/'+ith_finger_start, function(response){
       fingerTableEntry = JSON.parse(response);
       fingerTableEntry.fingerID = fingerStart(i);
       _fingerTable[i] = fingerTableEntry;
@@ -220,7 +268,7 @@ function peer(port, succ_port, pred_port) {
   }
 
   function getRequest(peer, link, callback, errorCallback, tries){
-     if(typeof tries !== 'undefined'){
+     if(typeof tries == 'undefined'){
       tries = 3;
      }
      var get_options = {
@@ -239,10 +287,14 @@ function peer(port, succ_port, pred_port) {
         callback(response);
       });
     }).on('error', function(err) {
-        if(typeof errorCallback !== 'undefined' && tries == 0){
-          errorCallback();
+        if(tries <= 0){
+          if(typeof errorCallback !== 'undefined'){ 
+            errorCallback();
+          }
         }else{
-          getRequest(peer, link, callback, errorCallback, (tries--));
+          tries = tries - 1;
+
+          getRequest(peer, link, callback, errorCallback, tries);
       }
     });
   }
@@ -284,6 +336,29 @@ function peer(port, succ_port, pred_port) {
     tempSuccessor.fingerID = fingerStart(1);
     _fingerTable[1] = tempSuccessor;
 
+  }
+
+  
+  function sucessorGetRequest(link, callback, errorCallback){
+    //getRequest(peer, link, callback, errorCallback, tries)
+
+    getRequest(_successor, link, callback, function(){
+      if(_successorList.length > 0){
+        setSuccessor(_successorList.shift());
+
+        sucessorGetRequest(link, function(response){
+          postRequest(_successor, '/peerRequests/notify', _this , function(response) {
+            updateOthers();
+          });
+          callback(response);
+        }, errorCallback);
+
+      }else{
+        if(typeof errorCallback !== 'undefined'){
+          errorCallback();
+        }
+      }
+    });
   }
 
   function httpRequest(peer, link, content, callback, method, errorCallback, tries) {
@@ -351,7 +426,7 @@ function peer(port, succ_port, pred_port) {
       initFingertable(i+1);
     }
     else {
-      getRequest(_successor, '/peerRequests/find_successor/'+fingerID, function(response) {
+      sucessorGetRequest( '/peerRequests/find_successor/'+fingerID, function(response) {
         returnedSuccessor = JSON.parse(response);
 
         returnedSuccessor.fingerID = fingerID;
@@ -371,7 +446,7 @@ function peer(port, succ_port, pred_port) {
       }
     
       var pred_search_id = (_this.id - Math.pow(2, i-1)).mod(Math.pow(2, _hashLength*4));
-      getRequest(_successor, '/peerRequests/find_predecessor/'+pred_search_id, function(response){
+      sucessorGetRequest( '/peerRequests/find_predecessor/'+pred_search_id, function(response){
         returnedPredecessor = JSON.parse(response);
         postRequest(returnedPredecessor, '/peerRequests/updateFingerTable', {peer : _this, i : i}, function(response){});
         updateOthers(i+1); 
@@ -478,7 +553,8 @@ function peer(port, succ_port, pred_port) {
       get_this : get_this,
       getFingertable : getFingertable,
       updateFingerTable : updateFingerTable,
-      fix_fingers : fix_fingers
+      fix_fingers : fix_fingers,
+      getSuccessorList : getSuccessorList
     }
 
 
