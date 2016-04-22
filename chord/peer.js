@@ -290,6 +290,9 @@ function peer(port, succ_port, pred_port) {
         if(tries <= 0){
           if(typeof errorCallback !== 'undefined'){ 
             errorCallback();
+          }else{
+
+            console.log("Failed a get request on " + JSON.stringify(peer) + " with link: " + link);
           }
         }else{
           tries = tries - 1;
@@ -299,27 +302,7 @@ function peer(port, succ_port, pred_port) {
     });
   }
 
-  function getRequestOut(link, callback){
-     var get_options = {
-        host : 'api.spark.io',
-        path : link, 
-        //port: 80,
-        //url: link,
-        //url: "www.simonfischer.com",
-        followAllRedirects: true,
-        agent: false
-    };
-    https.get(get_options, function(res) {
-      var response = "";
-      res.on('data', function(chunk) {
-        response += chunk;
-      });
 
-      res.on('end', function() {
-        callback(response);
-      });
-    });
-  }
 
   function deleteRequest(peer, link, callback, errorCallback) {
     httpRequest(peer, link, "", callback, "DELETE", errorCallback);
@@ -362,7 +345,7 @@ function peer(port, succ_port, pred_port) {
   }
 
   function httpRequest(peer, link, content, callback, method, errorCallback, tries) {
-    if(typeof tries !== 'undefined'){
+    if(typeof tries == 'undefined'){
       tries = 3;
     }
     var post_options = {
@@ -391,8 +374,12 @@ function peer(port, succ_port, pred_port) {
     post_req.write(JSON.stringify( content ));
 
     post_req.on('error', function(err) {
-      if(typeof errorCallback !== 'undefined' && tries == 0){
-        errorCallback();
+      if(tries <= 0){
+         if(typeof errorCallback !== 'undefined'){ 
+            errorCallback();
+          }else{
+            console.log("Failed a http  " + method + " request on " + JSON.stringify(peer) + " with link: " + link);
+          }
       }else{
         httpRequest(peer, link, content, callback, method, errorCallback, (tries--));
       }
