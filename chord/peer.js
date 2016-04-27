@@ -1,5 +1,5 @@
 var requests = require('../utils/httpRequests');
-
+requests = requests
 const crypto = require('crypto');
 
 
@@ -450,7 +450,8 @@ function peer(port, succ_port, pred_port) {
       getFingertable : getFingertable,
       updateFingerTable : updateFingerTable,
       fix_fingers : fix_fingers,
-      getSuccessorList : getSuccessorList
+      getSuccessorList : getSuccessorList,
+      hashId : hashId
     }
 
 

@@ -1,9 +1,41 @@
-function chatOverlay(chordring) {
+function chatOverlay(chordring, requests) {
 
 	var _chordring = chordring;
 
-	function create(groupId){
-		throw "create not implemented yet"
+	var _groups = [];
+
+
+	function createGroupByName(name){
+		var thisPeer = _chordring.get_this();
+		var groupName = thisPeer.ip + ":" + thisPeer.port + ";" + name;
+
+		var groupId = _chordring.hashId(groupName);
+
+		_chordring.find_successor(groupId, function(successor){
+			requests.postRequest(successor, '/chat/'+groupName+'/create', {}, 
+				function(){
+					console.log("Successfull create request");
+				}, 
+				function(){
+					console.log("Create Request not successfull")
+				});
+		});	
+	}
+
+	function create(name){
+		var thisPeer = _chordring.get_this();
+		var groupName = _thisPeer.ip + ":" + _thisPeer.port + ";" + name;
+
+		var groupId = hashId(groupName);
+
+		_chordring.find_successor(groupId, function(successor){
+
+
+
+		});	
+
+
+		throw "create not implemented yet" 
 	}
 
 	function join(groupId){
@@ -24,7 +56,8 @@ function chatOverlay(chordring) {
 	return { create : create,
 			 join : join,
 			 leave : leave,
-			 multicast : multicast };
+			 multicast : multicast,
+			 createGroupByName : createGroupByName };
 
 }
 

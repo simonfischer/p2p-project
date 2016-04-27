@@ -1,11 +1,17 @@
 var express = require('express');
 var router = express.Router();
 
-router.post('/:id/create', function(req, res, next){
+router.post('/:name/create', function(req, res, next){
   var chatOverlay = req.app.get('chatOverlay');
-  var id = req.params.id;
-  chatOverlay.create(id);
+  var name = req.params.name;
+  chatOverlay.create(name);
+  res.send(JSON.stringify({status : "ok"}));
+});
 
+router.post('/:name/createByName', function(req, res, next){
+  var chatOverlay = req.app.get('chatOverlay');
+  var name = req.params.name;
+  chatOverlay.createByName(name);
   res.send(JSON.stringify({status : "ok"}));
 });
 
