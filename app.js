@@ -1,5 +1,5 @@
 
-var requests = require('../utils/httpRequests');
+var requests = require('./utils/httpRequests');
 var peer = require('./chord/peer');
 var chatOverlay = require('./overlay/chatOverlay')(peer, requests);
 
