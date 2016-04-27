@@ -451,7 +451,8 @@ function peer(port, succ_port, pred_port) {
       updateFingerTable : updateFingerTable,
       fix_fingers : fix_fingers,
       getSuccessorList : getSuccessorList,
-      hashId : hashId
+      hashId : hashId,
+      closestPreceedingFinger : closestPreceedingFinger
     }
 
 

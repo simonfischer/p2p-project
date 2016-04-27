@@ -11,14 +11,15 @@ router.post('/:name/create', function(req, res, next){
 router.post('/:name/createByName', function(req, res, next){
   var chatOverlay = req.app.get('chatOverlay');
   var name = req.params.name;
-  chatOverlay.createByName(name);
+  chatOverlay.createGroupByName(name);
   res.send(JSON.stringify({status : "ok"}));
 });
 
-router.post('/:id/join', function(req, res, next){
+router.post('/:name/join', function(req, res, next){
   var chatOverlay = req.app.get('chatOverlay');
-  var id = req.params.id;
-  chatOverlay.join(id);
+  var id = req.params.name;
+  var peer = req.body;
+  chatOverlay.join(id, peer, function(){});
   res.send(JSON.stringify({status : "ok"}));
 });
 

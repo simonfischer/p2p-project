@@ -5,6 +5,7 @@ var requests;
 
 var peerMock;
 var requestsMock;
+var multicastMock;
 
 var multicast;
 
@@ -14,12 +15,41 @@ describe("Create group", function(){
 	beforeEach("Run this before", function(){
 		peer = require('../chord/peer');
 		requests = require('../utils/httpRequests');
+
+		multicast = require('../overlay/chatOverlay')(peer, requests);
+
 		peerMock = sinon.mock(peer);
 		requestsMock = sinon.mock(requests);
-		multicast = require('../overlay/chatOverlay')(peer, requests);
 	});
 
+
 	it("Groupname is correctly created ", function(){
+
+		peerMock.expects("get_this").once().returns({ip : "192.168.1.1", port : "2000"});
+		
+		multicastMock = sinon.mock(multicast)
+		
+		multicastMock.expects("create").once().withArgs("192.168.1.1:2000;group")
+
+		multicast.createGroupByName("group")
+
+		multicastMock.verify()
+
+		// var groupCreated = false;
+		// multicast.create = function(name){
+		// 	console.log("ceate");
+		// 	if(name == "192.168.1.1:2000;group"){
+		// 		groupCreated = true;
+		// 	}
+		// }
+
+		// multicast.createGroupByName("group");
+
+		// assert(groupCreated);
+
+	});
+
+	/*it("Groupname is correctly created ", function(){
 
 		peerMock.expects("get_this").once().returns({ip : "192.168.1.1", port : "2000"});
 
@@ -32,9 +62,9 @@ describe("Create group", function(){
 
 		peerMock.verify();
 		requestsMock.verify();
-	});
+	});*/
 
-	
+
 
 })
 

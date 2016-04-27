@@ -64,4 +64,22 @@ block content
             td #{val.id}
         - }
 
+  .groups
+    h3 List of groups
+    table
+      tr
+        td Group name
+        td Children
+        td Root node
+      each val in groups
+        - if(typeof(val) !== 'undefined'){
+          tr
+            td #{val.groupName}
+            td 
+              each child in val.children
+                p #{child.id}
+
+            td #{val.rootNode.id}
+        - }
+
 

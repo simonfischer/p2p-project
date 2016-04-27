@@ -81,11 +81,34 @@ a {
 	padding: 10px;
 }
 
+
 .successorList table tr td:nth-child(1){
 	width: 20px;
 }
 .successorList table tr td:nth-child(2){
 	width: 70px;
+}
+
+.groups{
+	color: white;
+	position: absolute;
+	left: 344px;
+	bottom: 0px;
+	background-color: #808080;
+	border-right: 1px solid black;
+	border-left: 0px solid black;
+	border-top: 1px solid black;
+	padding: 10px;
+}
+
+.groups table tr td:nth-child(1){
+	width: 140px;
+}
+.groups table tr td:nth-child(2){
+	width: 80px;
+}
+.groups table tr td:nth-child(3){
+	width: 80px;
 }
 
 .fingerTable table {
