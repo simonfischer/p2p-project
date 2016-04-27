@@ -10,8 +10,9 @@ function chatOverlay(chordring, requests) {
 		var groupName = thisPeer.ip + ":" + thisPeer.port + ";" + name;
 
 		var groupId = _chordring.hashId(groupName);
-
+		console.log("find_successor is next");
 		_chordring.find_successor(groupId, function(successor){
+			
 			requests.postRequest(successor, '/chat/'+groupName+'/create', {}, 
 				function(){
 					console.log("Successfull create request");
