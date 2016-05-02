@@ -1,4 +1,4 @@
-function chatOverlay(chordring, requests) {
+function overlayNetwork(chordring, requests) {
 
 	var _chordring = chordring;
 
@@ -202,4 +202,4 @@ function chatOverlay(chordring, requests) {
 
 }
 
-module.exports = chatOverlay;
+module.exports = overlayNetwork;

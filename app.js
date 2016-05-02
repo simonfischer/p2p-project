@@ -1,7 +1,7 @@
 
 var requests = require('./utils/httpRequests');
 var peer = require('./chord/peer');
-var chatOverlay = require('./overlay/chatOverlay')(peer, requests);
+var overlayNetwork = require('./overlay/overlayNetwork')(peer, requests);
 
 var express = require('express');
 var path = require('path');
@@ -14,7 +14,7 @@ var routes = require('./routes/index');
 var users = require('./routes/users');
 var peerRequests = require('./routes/peerRequests');
 
-var chatOverlayRequests = require('./routes/chatOverlayRequests');
+var overlayNetworkRequests = require('./routes/overlayNetworkRequests');
 
 var app = express();
 
@@ -23,7 +23,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
 app.set('peer', peer);
-app.set('chatOverlay', chatOverlay);
+app.set('overlayNetwork', overlayNetwork);
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -36,7 +36,7 @@ app.use('/', routes);
 app.use('/users', users);
 
 app.use('/peerRequests', peerRequests);
-app.use('/chat', chatOverlayRequests);
+app.use('/chat', overlayNetworkRequests);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
