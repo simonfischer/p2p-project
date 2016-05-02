@@ -33,7 +33,7 @@ function chatOverlay(chordring, requests) {
 		});	
 	}
 
-	function join(groupName, caller, callback) {
+	function join(groupName, caller, callback, msgHandlerFn) {
 
 		var id = _chordring.hashId(groupName);
 		var thisPeer = _chordring.get_this();
@@ -56,7 +56,7 @@ function chatOverlay(chordring, requests) {
 	  	}
 
 	  	if(caller.id == thisPeer.id){
-	     	_topicsList[groupName] = true;
+	     	_topicsList[groupName] = msgHandlerFn;
 		}
 
 	    // base case: only one node in ring, it is the successor of everything
@@ -144,7 +144,8 @@ function chatOverlay(chordring, requests) {
 			var children = group.children;
 
 			if(_topicsList[groupName]){
-				messageHandler(groupName, msg);
+				// if there is a message handler associated with the group name, i.e. we're interested, pass the msg
+				_topicsList[groupName](groupName, msg);
 			}
 
 			for(i = 0; i < children.length; i++){
@@ -189,10 +190,6 @@ function chatOverlay(chordring, requests) {
 			}
 		}
 		return undefined;
-	}
-
-	function messageHandler(groupName, msg){
-
 	}
 
 	return { create : create,
