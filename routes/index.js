@@ -13,7 +13,8 @@ function handleBaseDesign(req, res, next){
     pred : peer.get_predecessor(),
     fingerTable : peer.getFingertable(),
     successorList : peer.getSuccessorList(),
-    groups : chatOverlay.groups
+    groups : chatOverlay.groups,
+    topics : chatOverlay.topics
   });
 }
 

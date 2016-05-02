@@ -82,4 +82,14 @@ block content
             td #{val.rootNode.id}
         - }
 
+  .topics
+    h3 List of topics
+    table
+      tr
+        td Group name
+        td Interested
+      each val, index in topics
+        tr
+          td #{index}
+          td #{val}
 
