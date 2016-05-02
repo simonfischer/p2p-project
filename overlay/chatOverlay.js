@@ -116,16 +116,45 @@ function chatOverlay(chordring, requests) {
 			return;
 		}
 
-		requests.postRequest(parent, '/chat/'+ groupName +'/leave', thisPeer ,function(response){}, function(){ console.log("Error post requesting to closestPreceedingFinger in chatOverlay")});
+		requests.postRequest(parent, '/chat/'+ groupName +'/leave', thisPeer ,function(response){}, 
+			function(){ console.log("Error post requesting to closestPreceedingFinger in chatOverlay")});
 	}
 
-	function multicast(groupId, msg){
-		throw "multicast not implemented yet"
+	function multicast(groupName, msg, caller){
+		var thisPeer = _chordring.get_this();
+		var group = searchInGroups(groupName);
+		if(!group){
+			console.log("Group doesnt exists when trying to multicast. THIS SHOULD NOT HAPPEN");
+			return;
+		}
+		if(thisPeer.id == caller.id){
+			var rootNode = group.rootNode;
+			if(rootNode.id == _nullPeer.id){
+				_chordring.find_successor(_chordring.hashId(group.groupName), function(successor){
+					group.rootNode = successor;
+					multicast(groupName, msg, caller);
+				});
+				return;
+			}
+			requests.postRequest(rootNode, '/chat/'+ groupName +'/multicast', { msg : msg, peer : thisPeer} ,function(response){}, 
+				function(){ console.log("")});
+
+
+		}else{
+			var children = group.children;
+
+			if(_topicsList[groupName]){
+				messageHandler(groupName, msg);
+			}
+
+			for(i = 0; i < children.length; i++){
+				requests.postRequest(children[i], '/chat/'+ groupName +'/multicast', { msg : msg, peer : thisPeer} ,function(response){}, 
+					function(){ console.log("")});
+			}
+		}
+
 	}
 
-	function sendMulticast(groupId, msg){		
-		throw "sendMulticast not implemented yet"
-	}
 
 	function searchInGroups(name){
 		for(i = 0; i < _groups.length; i++){
@@ -160,6 +189,10 @@ function chatOverlay(chordring, requests) {
 			}
 		}
 		return undefined;
+	}
+
+	function messageHandler(groupName, msg){
+
 	}
 
 	return { create : create,
