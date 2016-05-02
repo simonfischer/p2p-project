@@ -26,7 +26,8 @@ router.post('/:name/join', function(req, res, next){
 router.post('/:id/leave', function(req, res, next){
   var chatOverlay = req.app.get('chatOverlay');
   var id = req.params.id;
-  chatOverlay.leave(id);  
+  var peer = req.body;
+  chatOverlay.leave(id, peer); 
   res.send(JSON.stringify({status : "ok"}));
 });
 

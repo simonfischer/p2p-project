@@ -20,7 +20,7 @@ function chatOverlay(chordring, requests) {
 
 		_chordring.find_successor(groupId, function(successor){
 			if(thisPeer.id == successor.id){
-				_groups.push({groupName : groupName, children : [], rootNode : thisPeer});
+				_groups.push({groupName : groupName, children : [], rootNode : thisPeer, parent : _nullPeer});
 
 			}else{
 				requests.postRequest(successor, '/chat/'+groupName+'/create', {}, 
@@ -46,7 +46,7 @@ function chatOverlay(chordring, requests) {
 		
 
 	  	if(!group){
-	  		_groups.push({groupName : groupName, children : [], rootNode : _nullPeer});
+	  		_groups.push({groupName : groupName, children : [], rootNode : _nullPeer, parent : _nullPeer});
 	  		group = searchInGroups(groupName);
 	  	}
 
@@ -78,14 +78,45 @@ function chatOverlay(chordring, requests) {
 	     if(caller.id != thisPeer.id){
 	     	group.children.push(caller);
 	     }
-	     requests.postRequest(_chordring.closestPreceedingFinger(id), '/chat/'+ groupName +'/join', thisPeer ,function(response){
+	     var parent = _chordring.closestPreceedingFinger(id);
+	     group.parent = parent;
+	     requests.postRequest(parent, '/chat/'+ groupName +'/join', thisPeer ,function(response){
 	            callback(JSON.parse(response));
 	      }, function(){ console.log("Error post requesting to closestPreceedingFinger in chatOverlay")});
 	    }
 	  }
 
-	function leave(groupName){
-		delete _topicsList[groupName];
+	function leave(groupName, caller){
+		var thisPeer = _chordring.get_this();
+		var group = searchInGroups(groupName);
+
+		
+		if(!group){
+			console.log("Group doesnt exists when trying to leave. THIS SHOULD NOT HAPPEN")
+			return;
+		}
+
+		if(thisPeer.id == caller.id){
+			delete _topicsList[groupName];
+		}else{
+			var children = group.children;
+			deleteInChildren(caller, children);
+		}
+		
+
+		if(group.children.length > 0){
+			return;
+		}
+
+		var parent = group.parent;
+
+		deleteInGroups(groupName);
+
+		if(!parent){
+			return;
+		}
+
+		requests.postRequest(parent, '/chat/'+ groupName +'/leave', thisPeer ,function(response){}, function(){ console.log("Error post requesting to closestPreceedingFinger in chatOverlay")});
 	}
 
 	function multicast(groupId, msg){
@@ -104,6 +135,23 @@ function chatOverlay(chordring, requests) {
 		}
 		return undefined;
 	}
+
+	function deleteInGroups(name){
+		for(i = 0; i < _groups.length; i++){
+			if(_groups[i].groupName == name){
+				return _groups.splice(i, 1);
+			}
+		}
+	}
+
+	function deleteInChildren(caller, children){
+		for(i = 0; i < children.length; i++){
+			if(children[i].id == caller.id){
+				return children.splice(i, 1);
+			}
+		}
+	}
+
 
 	function searchInChildren(caller, children){
 		for(i = 0; i < children.length; i++){
