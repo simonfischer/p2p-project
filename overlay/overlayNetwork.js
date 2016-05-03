@@ -8,11 +8,12 @@ function overlayNetwork(chordring, requests) {
 
 	var _topicsList = { };
 
-	function createGroupByName(name){
-		var thisPeer = _chordring.get_this();
-		var groupName = thisPeer.ip + ":" + thisPeer.port + ";" + name;
-		create(groupName);
-	}
+	// Functionality moved to chat.js
+	// function createGroupByName(name){
+	// 	var thisPeer = _chordring.get_this();
+	// 	var groupName = thisPeer.ip + ":" + thisPeer.port + ";" + name;
+	// 	create(groupName);
+	// }
 
 	function create(groupName){
 		var groupId = _chordring.hashId(groupName);
