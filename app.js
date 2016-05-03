@@ -2,6 +2,7 @@
 var requests = require('./utils/httpRequests');
 var peer = require('./chord/peer');
 var overlayNetwork = require('./overlay/overlayNetwork')(peer, requests);
+var chat = require('./overlay/chat')(overlayNetwork);
 
 var express = require('express');
 var path = require('path');
@@ -24,6 +25,7 @@ app.set('view engine', 'jade');
 
 app.set('peer', peer);
 app.set('overlayNetwork', overlayNetwork);
+app.set('chat', chat);
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));

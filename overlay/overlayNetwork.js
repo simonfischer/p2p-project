@@ -127,15 +127,16 @@ function overlayNetwork(chordring, requests) {
 			console.log("Group doesnt exists when trying to multicast. THIS SHOULD NOT HAPPEN");
 			return;
 		}
-		if(thisPeer.id == caller.id){
-			var rootNode = group.rootNode;
-			if(rootNode.id == _nullPeer.id){
-				_chordring.find_successor(_chordring.hashId(group.groupName), function(successor){
-					group.rootNode = successor;
-					multicast(groupName, msg, caller);
-				});
-				return;
-			}
+		var rootNode = group.rootNode;
+		if(rootNode.id == _nullPeer.id){
+			_chordring.find_successor(_chordring.hashId(group.groupName), function(successor){
+				group.rootNode = successor;
+				multicast(groupName, msg, caller);
+			});
+			return;
+		}
+		if(thisPeer.id == caller.id && thisPeer.id != rootNode.id){
+
 			requests.postRequest(rootNode, '/chat/'+ groupName +'/multicast', { msg : msg, peer : thisPeer} ,function(response){}, 
 				function(){ console.log("")});
 
