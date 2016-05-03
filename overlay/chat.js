@@ -26,6 +26,9 @@ function Chat(overlayNetwork) {
     }
 
     function create(groupName) {
+        var port = process.env.PORT;
+        // Assuming always on localhost, this assumption comes from ./chord/peer.js line 467
+        var groupName = "localhost:" + port + ";" + groupName;
         _overlay.create(groupName);
     }
 
