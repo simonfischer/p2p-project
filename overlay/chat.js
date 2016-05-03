@@ -1,24 +1,43 @@
 function Chat(overlayNetwork) {
-    _overlay = overlayNetwork;
-    _chatMsgs = {}
+    var _overlay = overlayNetwork;
+    var _chatMsgs = {}
+    var _io;
+    var caller = { ip : "localhost", port : process.env.PORT }
 
-    function sendMsg(groupName, msg, caller) {
+
+    function sendMsg(groupName, msg) {
         _overlay.multicast(groupName, msg, caller);
     }
 
-    function join(groupName, caller) {
-        function msgHandler(groupName, msg) {
-            console.log("CHAT RECEIVED: " + msg);
-            
-            if (!_chatMsgs[groupName]) {
-                _chatMsgs[groupName] = [];
-            }            
-            _chatMsgs[groupName].push(msg);
+    function join(groupName) {
+        
+        _overlay.join(groupName, caller, function(){}, msgHandler);
+        _io.emit("newChatJoined", {groupName : groupName});
+    }
+    function setIo(io){
+        _io = io;
+    }
 
-            // tell the HTML of the update somehow..
+    function getChats(){
+        var topics  = _overlay.topics;
+        var chats = [];
+        for (var key in topics) {
+            chats.push(key);
         }
 
-        _overlay.join(groupName, caller, undefined, msgHandler);
+        return chats; 
+    }
+
+    function msgHandler(groupName, msg) {
+
+        _io.emit("newChatMessage", {groupName : groupName, msg : msg});
+
+        if (!_chatMsgs[groupName]) {
+            _chatMsgs[groupName] = [];
+        }            
+        _chatMsgs[groupName].push(msg);
+
+        // tell the HTML of the update somehow..
     }
 
     function leave(groupName, caller) {
@@ -39,6 +58,7 @@ function Chat(overlayNetwork) {
             case 'join':
                 // grab groupname and caller from content
                 // call join()
+                join(content.groupName)
                 break;
             case 'leave':
                 // grab groupname and caller from content
@@ -47,15 +67,19 @@ function Chat(overlayNetwork) {
             case 'create':
                 // grab groupname from content
                 // call create()
+                create(content.groupName);
                 break;
             case 'sendmsg':
                 // grab groupname, msg and caller from content
                 // call sendMsg()
+                sendMsg(content.groupName, content.msg)
                 break;
         }
     }
 
-    return {}
+    return { handleCmd : handleCmd,
+             setIo : setIo,
+             getChats : getChats}
 }
 
 module.exports = Chat;

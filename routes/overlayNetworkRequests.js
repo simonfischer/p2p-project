@@ -8,13 +8,6 @@ router.post('/:name/create', function(req, res, next){
   res.send(JSON.stringify({status : "ok"}));
 });
 
-router.post('/:name/createByName', function(req, res, next){
-  var overlayNetwork = req.app.get('overlayNetwork');
-  var name = req.params.name;
-  overlayNetwork.createGroupByName(name);
-  res.send(JSON.stringify({status : "ok"}));
-});
-
 router.post('/:name/join', function(req, res, next){
   var overlayNetwork = req.app.get('overlayNetwork');
   var id = req.params.name;

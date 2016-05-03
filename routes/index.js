@@ -5,49 +5,48 @@ var http = require('http').Server(router);
 var io = require('socket.io')(http);
 
 
-var middleware = require('socketio-wildcard')();
+var chat = null; 
 
-io.use(middleware);
-
-io.on('connection', function(socket) {
-  socket.on('*', function(){ 
-    console.log("recived socketio-wildcard")
-  });
-});
-
-io.listen(5000);
-
-/*
-var globalEvent = "*";
-io.$emit = function (name) {
-    if(!this.$events) return false;
-    for(var i=0;i<2;++i){
-        if(i==0 && name==globalEvent) continue;
-        var args = Array.prototype.slice.call(arguments, 1-i);
-        var handler = this.$events[i==0?name:globalEvent];
-        if(!handler) handler = [];
-        if ('function' == typeof handler) handler.apply(this, args);
-        else if (io.util.isArray(handler)) {
-            var listeners = handler.slice();
-            for (var i=0, l=listeners.length; i<l; i++)
-                listeners[i].apply(this, args);
-        } else return false;
-    }
-    return true;
-};
 
 io.on('connection', function(socket){
-  console.log("connection");
-  socket.on(globalEvent, function(msg){
-    console.log("got a *")
-    io.emit('chat message', msg);
+  if(chat != null){
+    socket.emit("initialChats", {listOfChats : chat.getChats()});
+  }
+  socket.on('join', function(msg){
+    if(chat != null){
+      chat.handleCmd("join", msg);
+    }
+  });
+
+  socket.on('leave', function(msg){ 
+    if(chat != null){
+      chat.handleCmd("leave", msg);
+    }
+  });
+
+  socket.on('create', function(msg){ 
+    if(chat != null){
+      chat.handleCmd("create", msg);
+    }
+  });
+
+  socket.on('sendmsg', function(msg){ 
+    if(chat != null){
+      chat.handleCmd("sendmsg", msg);
+    }
   });
 });
 
-http.listen(5000, function(){});*/
+var port = 1000 + parseInt(process.env.PORT);
+http.listen(port, function(){});
+
 
 
 function handleBaseDesign(req, res, next){
+  if(chat == null){
+    chat = req.app.get('chat');
+    chat.setIo(io);
+  }
   var peer = req.app.get('peer');
   var overlayNetwork = req.app.get('overlayNetwork');
 

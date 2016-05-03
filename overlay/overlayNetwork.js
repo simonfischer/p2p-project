@@ -35,7 +35,9 @@ function overlayNetwork(chordring, requests) {
 	}
 
 	function join(groupName, caller, callback, msgHandlerFn) {
-
+		if(!caller.id){
+			caller.id = _chordring.hashId(caller.ip + caller.port);
+		}
 		var id = _chordring.hashId(groupName);
 		var thisPeer = _chordring.get_this();
 		var successor = _chordring.get_successor();
@@ -122,6 +124,9 @@ function overlayNetwork(chordring, requests) {
 	}
 
 	function multicast(groupName, msg, caller){
+		if(!caller.id){
+			caller.id = _chordring.hashId(caller.ip + caller.port);
+		}
 		var thisPeer = _chordring.get_this();
 		var group = searchInGroups(groupName);
 		if(!group){
@@ -198,7 +203,6 @@ function overlayNetwork(chordring, requests) {
 			 join : join,
 			 leave : leave,
 			 multicast : multicast,
-			 createGroupByName : createGroupByName,
 			 groups : _groups,
 			 topics : _topicsList };
 

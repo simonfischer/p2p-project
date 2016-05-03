@@ -17,9 +17,39 @@ block content
 
 
   .leftBar
+    - var hidden = pred.ip != 'null';
+
+
+    .topOfBar(class=hidden ? '' : 'hidden')
+      
+      .createNewGroup
+        .h3 Create a new chat
+        form(id="createNewGroupForm")
+          p Chat name: 
+          .input
+            input(type="text", name="groupName")
+          .action
+            input(type="submit", id="chatCreateButton", value="Create chat")
+
+      .joinNewGroup
+        .h3 Join a chat
+        form(id="joinNewGroupForm")
+          p Chat name: 
+          .input
+            input(type="text", name="groupName")
+          .action
+            input(type="submit", id="chatJoinButton", value="Join chat")
+
+
+    .middleOfBar(class=hidden ? '' : 'hidden')
+      .listOfChats
+        .settings Settings - tables
+        
+
+
     .bottomOfBar
 
-      - var hidden = pred.ip != 'null';
+      
       .joinForm(class=hidden ? 'hidden' : '')
         form(id="join")
           .input
@@ -91,5 +121,12 @@ block content
       each val, index in topics
         tr
           td #{index}
-          td #{val}
+          td
+             - if (val) {
+              p Yes
+             - } else {
+              p No
+             - }
+
+  .chatRooms
 
