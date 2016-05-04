@@ -19,7 +19,7 @@ socket.on('newChatMessage', function(msg){
 
 
 function createChat(groupName){
-	var chatContainer = '<div class="chatContainer" id="'+ groupName +'">' +
+	var chatContainer = '<div class="chatContainer" style="display: none;" id="'+ groupName +'">' +
 		'<div class="messageContainer">'+
 			
 		'</div>'+
@@ -36,7 +36,7 @@ function createChat(groupName){
 	$(".chatRooms").append(chatContainer);
 
 	var id = '[id="message'+ groupName + '"]';
-	console.log(id);
+
 	$( id).submit(function( event ) {
 	  var groupName= $(id + " :input")[0].value;
 	  var msg= $(id + " :input")[1].value;
@@ -51,11 +51,21 @@ function createChat(groupName){
 
 socket.on('initialChats', function(msg){
 	var chats = msg.listOfChats;
-	console.log("msg : " + msg);
-	console.log(chats);
 	for (i = 0; i < chats.length; i++){
-		$(".listOfChats").append('<div class="chatRoom">'+ chats[i] +'</div>')
-		createChat(chats[i]);
+
+		$(".listOfChats").append('<div class="chatRoom">'+ chats[i].groupName +'</div>')
+		var chatMessages = chats[i].messages;
+		createChat(chats[i].groupName);
+
+		if(typeof chatMessages == 'undefined'){
+			return;
+		}
+		for(j = 0; j < chatMessages.length; j++){
+			$('.chatContainer[id="'+chats[i].groupName+'"] .messageContainer')
+			.append('<div class="message">'+ chatMessages[j]+'</div>')
+		}
+
+
 	}
 });
 
@@ -87,9 +97,22 @@ function prepPageForChat(){
 		$(".topics").show();
 
 		$(".successorList").show();
+
+		var chatRooms = $(".chatRooms").children();
+
+		for(i = 0; i < chatRooms.length; i++){
+			$(chatRooms[i]).hide()
+		}
 	});
 	$(".listOfChats").on("click", ".chatRoom", function (event) {
-		console.log(event.target.innerText)
+		var groupName = event.target.innerText;
+
+		var chatRooms = $(".chatRooms").children();
+
+		for(i = 0; i < chatRooms.length; i++){
+			$(chatRooms[i]).hide()
+		}
+		$('.chatContainer[id="'+groupName+'"]').show()
 
 
 

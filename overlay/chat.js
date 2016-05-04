@@ -22,7 +22,11 @@ function Chat(overlayNetwork) {
         var topics  = _overlay.topics;
         var chats = [];
         for (var key in topics) {
-            chats.push(key);
+            var chat = {groupName : key}
+            chat.messages = _chatMsgs[key];
+
+            chats.push(chat);
+
         }
 
         return chats; 
