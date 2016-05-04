@@ -10,8 +10,9 @@ socket.on('newChatJoined', function(msg){
 
 socket.on('newChatMessage', function(msg){
 	var chats = msg.listOfChats;		
-	$('.chatContainer[id="'+msg.groupName+'"] .messageContainer')
-			.append('<div class="message">'+ msg.msg +'</div>')
+	var containerId = '.chatContainer[id="'+msg.groupName+'"] .messageContainer';
+	$(containerId).append('<div class="message">'+ msg.msg +'</div>')
+	$(containerId).scrollTop($(containerId)[0].scrollHeight);
 });
 
 
@@ -60,10 +61,12 @@ socket.on('initialChats', function(msg){
 		if(typeof chatMessages == 'undefined'){
 			return;
 		}
+		var containerId = '.chatContainer[id="'+chats[i].groupName+'"] .messageContainer';
 		for(j = 0; j < chatMessages.length; j++){
-			$('.chatContainer[id="'+chats[i].groupName+'"] .messageContainer')
+			$(containerId)
 			.append('<div class="message">'+ chatMessages[j]+'</div>')
 		}
+		console.log("scroll to top")
 
 
 	}
@@ -113,7 +116,9 @@ function prepPageForChat(){
 			$(chatRooms[i]).hide()
 		}
 		$('.chatContainer[id="'+groupName+'"]').show()
-
+		
+		var containerId = '.chatContainer[id="'+groupName+'"] .messageContainer';
+		$(containerId).scrollTop($(containerId)[0].scrollHeight);
 
 
 		$(".fingerTable").hide();
