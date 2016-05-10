@@ -11,7 +11,7 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
-var routes = require('./routes/index');
+var routes = require('./routes/index')(chat);
 var users = require('./routes/users');
 var peerRequests = require('./routes/peerRequests');
 

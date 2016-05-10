@@ -48,7 +48,7 @@ function requests (){
 	}
 
 	function postRequest(peer, link, content, callback, errorCallback) {
-	httpRequest(peer, link, content, callback, "POST", errorCallback);
+		httpRequest(peer, link, content, callback, "POST", errorCallback);
 	}
 
 	function getRequest(peer, link, callback, errorCallback, tries){

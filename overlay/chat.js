@@ -6,7 +6,7 @@ function Chat(overlayNetwork) {
 
 
     function sendMsg(groupName, msg) {
-        _overlay.multicast(groupName, msg, caller);
+        _overlay.multicast(groupName, msg, undefined, caller);
     }
 
     function join(groupName) {
@@ -35,7 +35,6 @@ function Chat(overlayNetwork) {
     function msgHandler(groupName, msg) {
 
         _io.emit("newChatMessage", {groupName : groupName, msg : msg});
-
         if (!_chatMsgs[groupName]) {
             _chatMsgs[groupName] = [];
         }            

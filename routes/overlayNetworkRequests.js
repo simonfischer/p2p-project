@@ -29,9 +29,19 @@ router.post('/:id/multicast', function(req, res, next){
   var id = req.params.id;
   var msg = req.body.msg;
   var peer = req.body.peer;
-  overlayNetwork.multicast(id, msg, peer);  
+  var currentPackageCount = req.body.currentPackageCount;
+  overlayNetwork.multicast(id, msg, currentPackageCount, peer);  
+  console.log("multicast " + id)
   res.send(JSON.stringify({status : "ok"}));
 });
+
+router.put('/updateBackup', function(req, res, next){
+  var overlayNetwork = req.app.get('overlayNetwork');
+
+  overlayNetwork.backupGroups(req.body);
+  res.send(JSON.stringify({status : "ok"}));
+});
+
 
 
 

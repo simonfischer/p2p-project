@@ -14,6 +14,8 @@ function peer(port, succ_port, pred_port) {
   var _maxSuccessors = 3;
 
 
+
+
   function hashId(id){
     if (process.env.NOHASHING == 'true') {
       return port
@@ -431,6 +433,7 @@ function peer(port, succ_port, pred_port) {
     setInterval(stabilize, 1000);
     setInterval(fix_fingers, 1000);
   }
+
 
 
 

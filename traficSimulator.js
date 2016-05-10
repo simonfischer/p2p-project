@@ -1,6 +1,7 @@
 var io = require('socket.io-client');
 
-var numberOfPeers = 2;
+var numberOfPeers = 4;
+var numberOfRuns = 1;
 
 var sockets = [];
 
@@ -17,21 +18,37 @@ for(i = 0; i < numberOfPeers; i++){
 }
 
 
-sockets[0].emit('create', { groupName : "testGroup"})
+sockets[0].emit('create', { groupName : "test"})
 
-for(i = 0; i < numberOfPeers; i++){
-	 sockets[i].emit('join', { groupName : "testGroup"})
+
+
+function joinGroup(i){
+	sockets[i].emit('join', { groupName : "localhost:4000;test"})
+	sockets[i].on('newChatMessage', function(msg){ 
+		console.log("timelaps: " + (Date.now() - msg.msg));
+	});
+
+	i = i + 1;	
+	if(i < numberOfPeers){
+		setTimeout(function(){
+			joinGroup(i);
+		}, 300);
+	}
+	
 }
 
 
 function bloatWithMessages(){
-	for(i = 0; i < numberOfPeers; i++){
-		sockets[i].emit('sendmsg', { msg : getRandomMessage(), groupName : "testGroup"})
+	for(j = 0; j < numberOfRuns; j++){
+		for(i = 0; i < numberOfPeers; i++){
+			console.log(" j : " + j + "    i : " + i)
+			sockets[i].emit('sendmsg', { msg : Date.now(), groupName : "localhost:4000;test"})
+		}
 	}
-	setTimeout(bloatWithMessages, 500);
-}
 
-setTimeout(bloatWithMessages, 500);
+}
+joinGroup(0);
+setTimeout(bloatWithMessages, 1000);
 
 
 

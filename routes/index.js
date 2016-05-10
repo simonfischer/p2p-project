@@ -41,12 +41,7 @@ var port = 1000 + parseInt(process.env.PORT);
 http.listen(port, function(){});
 
 
-
 function handleBaseDesign(req, res, next){
-  if(chat == null){
-    chat = req.app.get('chat');
-    chat.setIo(io);
-  }
   var peer = req.app.get('peer');
   var overlayNetwork = req.app.get('overlayNetwork');
 
@@ -62,8 +57,13 @@ function handleBaseDesign(req, res, next){
   });
 }
 
+function initialRouter (chatArg){
+  chat = chatArg;
+  chat.setIo(io);
+  return router;
+}
 /* GET home page. */
 router.get('/', handleBaseDesign);
 
 
-module.exports = router;
+module.exports = initialRouter;
