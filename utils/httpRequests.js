@@ -25,9 +25,17 @@ function requests (){
 	      response += chunk;
 	    });
 
+
+
 	    res.on('end', function() {
-	      callback(response);
-	      tries = -1;
+	    	if(res.statusCode == 541){
+	    		if(typeof errorCallback !== 'undefined'){ 
+		          errorCallback();
+		        }
+	    	}else{
+	    		callback(response);
+	    	}
+	      
 	    });
 	});
 	post_req.write(JSON.stringify( content ));

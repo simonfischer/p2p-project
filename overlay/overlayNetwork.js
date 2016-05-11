@@ -12,6 +12,7 @@ function overlayNetwork(chordring, requests) {
 
 	var _kBackups = 3;
 
+
 	// Functionality moved to chat.js
 	// function createGroupByName(name){
 	// 	var thisPeer = _chordring.get_this();
@@ -56,8 +57,9 @@ function overlayNetwork(chordring, requests) {
 
 	  	if(!group){
 	  	//	console.log("pushing group on list join " + group )
-	  		_groups.push({groupName : groupName, children : [], rootNode : _nullPeer, lastSeenPackage : 0, parent : _nullPeer});
-	  		group = searchInGroups(groupName);
+
+  			_groups.push({groupName : groupName, children : [], rootNode : _nullPeer, lastSeenPackage : 0, parent : _nullPeer});
+  			group = searchInGroups(groupName);
 	  	}
 
 
@@ -78,9 +80,19 @@ function overlayNetwork(chordring, requests) {
 	    else if ((thisPeer.id >= id && id > predecessor.id)  || 
 	             (predecessor.id > thisPeer.id && (id < thisPeer.id || id > predecessor.id)) ||
 	             thisPeer.id == id) {
-	  	  if(caller.id != thisPeer.id){
-	  	  	group.children.push(caller);
-	  	  }
+	    	
+	    	if(_backupForGroups[groupName]){
+	    		var backupGroup = _backupForGroups[groupName];
+	    		if(typeof group.currentPackageCount == 'undefined' || group.currentPackageCount < backupGroup.currentPackageCount){
+
+	    			group.currentPackageCount = backupGroup.currentPackageCount;
+	    			group.rootNode = thisPeer;
+	    		}
+	  		}
+
+	  	    if(caller.id != thisPeer.id){
+	  	  		group.children.push(caller);
+	  	 	}
 	    }
 	    else {
 	      // searched id is not this node, nor its immediate neighbourhood;
@@ -130,30 +142,46 @@ function overlayNetwork(chordring, requests) {
 			function(){ console.log("Error post requesting to closestPreceedingFinger in chatOverlay")});
 	}
 
-	function multicast(groupName, msg, currentPackageCount, caller){
+	function multicast(groupName, msg, currentPackageCount, caller, response){
+		if(typeof response == 'string'){
+			console.log("response is a string containing: " + response)
+			//response = function(arg){}
+		}
+		if(typeof response == 'undefined'){
+			response = function(arg){}
+		}
 		if(!caller.id){
 			caller.id = _chordring.hashId(caller.ip + caller.port);
 		}
 		var thisPeer = _chordring.get_this();
 		var group = searchInGroups(groupName);
 		if(!group){
-			console.log("Group doesnt exists when trying to multicast. THIS SHOULD NOT HAPPEN");
+			if(typeof currentPackageCount == 'undefined'){
+				if(_backupForGroups[groupName]){
+					// TODO: check if the network is actually rootNode?
+					group.push(_backupForGroups[groupName])
+					multicast(groupName, msg, currentPackageCount, caller, response)
+				}else{
+					response("error");
+				}
+			}else{
+				response("error");
+			}
 			return;
 		}
 		var rootNode = group.rootNode;
 		if(rootNode.id == _nullPeer.id){
 			_chordring.find_successor(_chordring.hashId(group.groupName), function(successor){
 				group.rootNode = successor;
-				multicast(groupName, msg, currentPackageCount, caller);
+				multicast(groupName, msg, currentPackageCount, caller, response);
 			});
 			return;
 		}
 		if(thisPeer.id == caller.id && thisPeer.id != rootNode.id){
-			requests.postRequest(rootNode, '/chat/'+ groupName +'/multicast', { msg : msg, peer : thisPeer, currentPackageCount : currentPackageCount} ,function(response){
-			}, 
+			requests.postRequest(rootNode, '/chat/'+ groupName +'/multicast', { msg : msg, peer : thisPeer, currentPackageCount : currentPackageCount} ,function(response){}, 
 				function(){ 
 					group.rootNode = _nullPeer;
-					multicast(groupName, msg, currentPackageCount, caller);
+					multicast(groupName, msg, currentPackageCount, caller, response);
 				});
 
 
@@ -175,34 +203,48 @@ function overlayNetwork(chordring, requests) {
 			if(typeof currentPackageCount == 'undefined'){
 				if(!_backupForGroups[groupName]){
 					console.log("Someone thinks we are root node, but we are not, we are " + thisPeer.id)
+					response("error");
 					return;
 				}
-				var backupGroup = _backupForGroups[groupName];
 
-				group.rootNode = thisPeer;
-				group.currentPackageCount = backupGroup.currentPackageCount;
+				var groupId = _chordring.hashId(groupName);
+
+				_chordring.find_successor(groupId, function(successor){
+					if(thisPeer.id == successor.id){
+						var backupGroup = _backupForGroups[groupName];
+
+						group.rootNode = thisPeer;
+						group.currentPackageCount = backupGroup.currentPackageCount;
+						
+
+						var children = group.children.concat(backupGroup.children);
+
+						children = children.filter(function (item, pos) {
+
+							return children.indexOf(item) == pos;
+						});
+
+						group.children = children;
+
+						var parent = group.parent;
+						if(!parent){
+							multicast(groupName, msg, currentPackageCount, caller, response)
+							return;
+						}
+						requests.postRequest(parent, '/chat/'+ groupName +'/leave', thisPeer ,function(responseCode){
+							group.parent = _nullPeer;
+							multicast(groupName, msg, currentPackageCount, caller, response)
+						}, 
+						function(){ 
+							response("error");
+							console.log("Error post requesting to closestPreceedingFinger in chatOverlay")
+						});
+					}else{
+						response("error");
+					}
+				});	
+
 				
-
-				var children = group.children.concat(backupGroup.children);
-
-				children = children.filter(function (item, pos) {
-
-					return children.indexOf(item) == pos;
-				});
-
-				group.children = children;
-
-				var parent = group.parent;
-				if(!parent){
-					multicast(groupName, msg, currentPackageCount, caller)
-					return;
-				}
-				console.log("parent : " + JSON.stringify(parent))
-				requests.postRequest(parent, '/chat/'+ groupName +'/leave', thisPeer ,function(response){
-					group.parent = _nullPeer;
-					multicast(groupName, msg, currentPackageCount, caller)
-				}, 
-				function(){ console.log("Error post requesting to closestPreceedingFinger in chatOverlay")});
 				return;
 
 			}
@@ -212,14 +254,14 @@ function overlayNetwork(chordring, requests) {
 			// update last seen message count
 			var lastSeenPackage = group.lastSeenPackage;
 
-			if((lastSeenPackage + 1) != currentPackageCount){
+		/*	if((lastSeenPackage + 1) != currentPackageCount){
 				console.log("lastseen " + lastSeenPackage + " current: " + currentPackageCount)
 				repairNetwork();
 
 				return;
-			}else{
-				group.lastSeenPackage = currentPackageCount;
-			}
+			}else{*/
+			group.lastSeenPackage = currentPackageCount;
+			//}
 			
 			if(_topicsList[groupName]){
 				// if there is a message handler associated with the group name, i.e. we're interested, pass the msg
@@ -231,6 +273,7 @@ function overlayNetwork(chordring, requests) {
 				requests.postRequest(children[i], '/chat/'+ groupName +'/multicast', { msg : msgToSend, peer : thisPeer, currentPackageCount : newPackageCount} ,function(response){}, 
 					function(){ console.log("")});
 			}
+			response("ok");
 		}
 
 	}
@@ -334,6 +377,40 @@ function overlayNetwork(chordring, requests) {
 			_backupForGroups[groups[i].groupName] = groups[i];
 		}
 	}
+
+	function newPredecessorInChordRing(predecessor){
+		var thisPeer = _chordring.get_this();
+		for(i = 0; i < _groups.length; i++){
+			if(_groups[i].rootNode.id == thisPeer.id){
+				checkGroupForNewRootNode(_groups[i], predecessor);
+			}
+		}
+	}
+
+	function checkGroupForNewRootNode(group, predecessor){
+		var groupId = _chordring.hashId(group.groupName);
+		var thisPeer = _chordring.get_this();
+		var successor = _chordring.get_successor();
+		if (predecessor.id == successor.id && thisPeer.id == predecessor.id) {
+	      return;
+	    }
+	    
+	    if ((predecessor.id < groupId && groupId <= thisPeer.id)  || 
+	             (thisPeer.id < predecessor.id && (groupId > predecessor.id || groupId < thisPeer.id))) {
+	      return;  
+	    }
+
+		group.rootNode = predecessor;
+
+		var data = {ithPeer : 0, groups : [group]}
+
+		requests.putRequest(predecessor, '/chat/updateBackup', data , function(response){
+			requests.postRequest(predecessor, '/chat/'+ group.groupName +'/join', thisPeer ,function(response){}, 
+				function(){ console.log("Error post requesting to closestPreceedingFinger in chatOverlay")});
+		});
+	}
+
+	_chordring.newPredecessorSubscribe(newPredecessorInChordRing)
 
 
     setInterval(backupSuccessors, 1000);

@@ -30,9 +30,15 @@ router.post('/:id/multicast', function(req, res, next){
   var msg = req.body.msg;
   var peer = req.body.peer;
   var currentPackageCount = req.body.currentPackageCount;
-  overlayNetwork.multicast(id, msg, currentPackageCount, peer);  
-  console.log("multicast " + id)
-  res.send(JSON.stringify({status : "ok"}));
+  overlayNetwork.multicast(id, msg, currentPackageCount, peer, function (status){
+    if(status != "error"){
+      res.send(JSON.stringify({status : "ok"}));
+    }else{
+      res.status(541).send('Something broke!');
+    }
+  });  
+
+
 });
 
 router.put('/updateBackup', function(req, res, next){

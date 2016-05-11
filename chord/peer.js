@@ -12,6 +12,7 @@ function peer(port, succ_port, pred_port) {
   var _hashLength = 3;
   var _successorList = [];
   var _maxSuccessors = 3;
+  var _predecessorSubscriptions = [];
 
 
 
@@ -47,10 +48,10 @@ function peer(port, succ_port, pred_port) {
 
 
   if (pred_port == "null") {
-    _predecessor = nullPeer;
+    setPredecessor(nullPeer);
   }
   else {
-    _predecessor = createPeer('localhost', pred_port);
+    setPredecessor(createPeer('localhost', pred_port));
   }
 
 
@@ -66,8 +67,12 @@ function peer(port, succ_port, pred_port) {
     return _predecessor;
   }
 
+  function newPredecessorSubscribe(fn){
+    _predecessorSubscriptions.push(fn);
+  }
+
   function notifyPredecessor(){
-    _predecessor = nullPeer;
+    setPredecessor(nullPeer);
   }
 
   function notifySuccessor(node){
@@ -80,7 +85,7 @@ function peer(port, succ_port, pred_port) {
                 
 
                 setSuccessor(nullPeer);
-                _predecessor = nullPeer;
+                setPredecessor(nullPeer);
 
           });      
     });
@@ -139,25 +144,25 @@ function peer(port, succ_port, pred_port) {
   function notify(peer) {
     // base case: only one node in ring, the peer is now our new successor AND predecessor.
     if (_this.id == _successor.id && _this.id == _predecessor.id) {
-      _predecessor = peer;
+      setPredecessor(peer);
       setSuccessor(peer);
     }
 
     // if the predecessor has left the network or is not known yet, accept the notify request
     else if (_predecessor.id == "null") {
-      _predecessor = peer;
+      setPredecessor(peer);
     }
 
     // new node has joined, or stabilization attemts to update pointers
     else if ((peer.id < _this.id && peer.id > _predecessor.id) ||
              (_predecessor.id > _this.id && (peer.id > _predecessor.id || peer.id < _this.id))) {
-      _predecessor = peer;
+      setPredecessor(peer);
     }
 
     else{
 
       requests.getRequest(_predecessor, '/peerRequests/find_successor/'+_this.id, function(response){}, function(){
-        _predecessor = peer;
+        setPredecessor(peer);
       });
 
     }
@@ -173,7 +178,7 @@ function peer(port, succ_port, pred_port) {
 
             setSuccessor(JSON.parse(response));     
             sucessorGetRequest('/peerRequests/find_predecessor/'+_successor.id, function(response){
-              _predecessor = JSON.parse(response);
+              setPredecessor(JSON.parse(response));
               
               initFingertable();
               
@@ -273,6 +278,13 @@ function peer(port, succ_port, pred_port) {
     tempSuccessor.fingerID = fingerStart(1);
     _fingerTable[1] = tempSuccessor;
 
+  }
+
+  function setPredecessor(predecessor){
+    _predecessor = predecessor;
+    for(i = 0; i < _predecessorSubscriptions.length; i++){
+      _predecessorSubscriptions[i](_predecessor);
+    }
   }
 
   
@@ -455,7 +467,8 @@ function peer(port, succ_port, pred_port) {
       fix_fingers : fix_fingers,
       getSuccessorList : getSuccessorList,
       hashId : hashId,
-      closestPreceedingFinger : closestPreceedingFinger
+      closestPreceedingFinger : closestPreceedingFinger,
+      newPredecessorSubscribe : newPredecessorSubscribe
     }
 
 
