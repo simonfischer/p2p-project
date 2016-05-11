@@ -114,7 +114,7 @@ function overlayNetwork(chordring, requests) {
 		}
 		
 
-		if(group.children.length > 0){
+		if(group.children.length > 0 || _topicsList[groupName]){
 			return;
 		}
 
@@ -149,11 +149,11 @@ function overlayNetwork(chordring, requests) {
 			return;
 		}
 		if(thisPeer.id == caller.id && thisPeer.id != rootNode.id){
-			requests.postRequest(rootNode, '/chat/'+ groupName +'/multicast', { msg : msg, peer : thisPeer, currentPackageCount : currentPackageCount} ,function(response){}, 
+			requests.postRequest(rootNode, '/chat/'+ groupName +'/multicast', { msg : msg, peer : thisPeer, currentPackageCount : currentPackageCount} ,function(response){
+			}, 
 				function(){ 
 					group.rootNode = _nullPeer;
 					multicast(groupName, msg, currentPackageCount, caller);
-					console.log("rootNode not answering, setting rootNode to null")
 				});
 
 
@@ -174,22 +174,36 @@ function overlayNetwork(chordring, requests) {
 
 			if(typeof currentPackageCount == 'undefined'){
 				if(!_backupForGroups[groupName]){
-					console.log("Someone thinks we are root node, but we are not")
+					console.log("Someone thinks we are root node, but we are not, we are " + thisPeer.id)
 					return;
 				}
 				var backupGroup = _backupForGroups[groupName];
 
 				group.rootNode = thisPeer;
 				group.currentPackageCount = backupGroup.currentPackageCount;
-				group.parent = _nullPeer;
+				
 
 				var children = group.children.concat(backupGroup.children);
+
 				children = children.filter(function (item, pos) {
-					return c.indexOf(item) == pos;
+
+					return children.indexOf(item) == pos;
 				});
 
 				group.children = children;
 
+				var parent = group.parent;
+				if(!parent){
+					multicast(groupName, msg, currentPackageCount, caller)
+					return;
+				}
+				console.log("parent : " + JSON.stringify(parent))
+				requests.postRequest(parent, '/chat/'+ groupName +'/leave', thisPeer ,function(response){
+					group.parent = _nullPeer;
+					multicast(groupName, msg, currentPackageCount, caller)
+				}, 
+				function(){ console.log("Error post requesting to closestPreceedingFinger in chatOverlay")});
+				return;
 
 			}
 

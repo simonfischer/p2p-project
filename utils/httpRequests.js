@@ -31,16 +31,16 @@ function requests (){
 	    });
 	});
 	post_req.write(JSON.stringify( content ));
-
+	
 	post_req.on('error', function(err) {
 	  if(tries <= 0){
-	     if(typeof errorCallback !== 'undefined'){ 
+	    if(typeof errorCallback !== 'undefined'){ 
 	        errorCallback();
 	      }else{
-	        console.log("Failed a http  " + method + " request on " + JSON.stringify(peer) + " with link: " + link);
 	      }
 	  }else{
-	    httpRequest(peer, link, content, callback, method, errorCallback, (tries--));
+	  	tries = tries - 1;
+	    httpRequest(peer, link, content, callback, method, errorCallback, tries);
 	  }
 	});
 

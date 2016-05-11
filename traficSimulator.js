@@ -33,6 +33,8 @@ function joinGroup(i){
 		setTimeout(function(){
 			joinGroup(i);
 		}, 300);
+	}else{
+		setTimeout(bloatWithMessages, 1000);
 	}
 	
 }
@@ -47,8 +49,10 @@ function bloatWithMessages(){
 	}
 
 }
-joinGroup(0);
-setTimeout(bloatWithMessages, 1000);
+setTimeout(function(){
+	joinGroup(0);
+}, 500);
+
 
 
 
