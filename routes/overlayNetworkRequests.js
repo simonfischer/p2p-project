@@ -29,6 +29,7 @@ router.post('/:id/multicast', function(req, res, next){
   var id = req.params.id;
   var msg = req.body.msg;
   var peer = req.body.peer;
+  var type = req.body.type;
   var currentPackageCount = req.body.currentPackageCount;
   overlayNetwork.multicast(id, msg, currentPackageCount, peer, function (status){
     if(status != "error"){
@@ -36,7 +37,7 @@ router.post('/:id/multicast', function(req, res, next){
     }else{
       res.status(541).send('Something broke!');
     }
-  });  
+  }, type);  
 
 
 });

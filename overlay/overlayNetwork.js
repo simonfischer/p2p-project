@@ -101,10 +101,16 @@ function overlayNetwork(chordring, requests) {
 	     	group.children.push(caller);
 	     }
 	     var parent = _chordring.closestPreceedingFinger(id);
+	     console.log("calling parent: " + parent.id)
 	     group.parent = parent;
 	     requests.postRequest(parent, '/chat/'+ groupName +'/join', thisPeer ,function(response){
 	            callback(JSON.parse(response));
-	      }, function(){ console.log("Error post requesting to closestPreceedingFinger in chatOverlay")});
+	      }, function(){ 
+
+	      	requests.postRequest(_chordring.get_successor(), '/chat/'+ groupName +'/join', thisPeer ,function(response){
+	            callback(JSON.parse(response));}, function(){});
+
+	      });
 	    }
 	  }
 
@@ -142,7 +148,23 @@ function overlayNetwork(chordring, requests) {
 			function(){ console.log("Error post requesting to closestPreceedingFinger in chatOverlay")});
 	}
 
-	function multicast(groupName, msg, currentPackageCount, caller, response){
+	function multicast(groupName, msg, currentPackageCount, caller, response, type){
+		if(typeof type == 'undefined'){
+			type = "msg";
+		}
+		switch(type){
+			case "msg":
+				multicastMsg(groupName, msg, currentPackageCount, caller, response)
+				break;
+
+			case "heartBeat":
+				heartBeatFromParent(msg);
+		}
+		
+
+	}
+
+	function multicastMsg(groupName, msg, currentPackageCount, caller, response){
 		if(typeof response == 'string'){
 			console.log("response is a string containing: " + response)
 			//response = function(arg){}
@@ -270,12 +292,11 @@ function overlayNetwork(chordring, requests) {
 
 			for(i = 0; i < children.length; i++){
 
-				requests.postRequest(children[i], '/chat/'+ groupName +'/multicast', { msg : msgToSend, peer : thisPeer, currentPackageCount : newPackageCount} ,function(response){}, 
+				requests.postRequest(children[i], '/chat/'+ groupName +'/multicast', { msg : msgToSend, peer : thisPeer, currentPackageCount : newPackageCount, type : "msg"} ,function(response){}, 
 					function(){ console.log("")});
 			}
 			response("ok");
 		}
-
 	}
 
 	function repairNetwork(){
@@ -413,7 +434,52 @@ function overlayNetwork(chordring, requests) {
 	_chordring.newPredecessorSubscribe(newPredecessorInChordRing)
 
 
+	var _lastHeartBeat = {};
+
+	function heartBeatFromParent(msg){
+		_lastHeartBeat[msg] = new Date().getTime();
+	}
+
+	function checkHeartBeat(){
+		var thisPeer = _chordring.get_this();
+		for(i = 0; i < _groups.length; i++){
+			var groupName = _groups[i].groupName;
+
+			if(typeof _lastHeartBeat[groupName] == 'undefined'){
+				return;
+			}
+			if (new Date().getTime() - _lastHeartBeat[groupName] > 10000){
+				_lastHeartBeat[groupName] = undefined;
+				console.log("JOINING")
+				join(groupName, thisPeer, function(){}, _topicsList[groupName]);
+
+			}
+
+		}
+		
+
+		
+	}
+
+	function heartBeatToChildren(){
+		var thisPeer = _chordring.get_this();
+		for(i = 0; i < _groups.length; i++){
+			for(j = 0; j < 
+				_groups[i].children.length; j++){
+				var child = _groups[i].children[j];	
+			
+				requests.postRequest(child, '/chat/'+ child.groupName +'/multicast', { msg : _groups[i].groupName, peer : thisPeer, type : "heartBeat"} ,function(response){}, 
+					function(){ console.log("")});
+			}
+		}
+
+	}
+
+	setInterval(heartBeatToChildren, 1000);
+
     setInterval(backupSuccessors, 1000);
+
+    setInterval(checkHeartBeat, 5000)
 
 	return { create : create,
 			 join : join,

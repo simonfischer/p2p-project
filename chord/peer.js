@@ -115,7 +115,7 @@ function peer(port, succ_port, pred_port) {
       requests.getRequest(closestPreceedingFinger(id), '/peerRequests/find_successor/'+id, function(response){
             callback(JSON.parse(response));
       }, function(){
-        requests.sucessorGetRequest('/peerRequests/find_successor/'+id, function(response){
+        sucessorGetRequest('/peerRequests/find_successor/'+id, function(response){
           callback(JSON.parse(response));
         });
       });

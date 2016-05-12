@@ -1,6 +1,6 @@
 var io = require('socket.io-client');
 
-var numberOfPeers = 4;
+var numberOfPeers = 10;
 var numberOfRuns = 1;
 
 var sockets = [];
