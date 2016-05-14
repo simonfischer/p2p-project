@@ -35,6 +35,12 @@ io.on('connection', function(socket){
       chat.handleCmd("sendmsg", msg);
     }
   });
+
+  socket.on('childNodes', function(msg){ 
+    if(chat != null){
+      chat.handleCmd("childNodes", msg);
+    }
+  });
 });
 
 var port = 1000 + parseInt(process.env.PORT);

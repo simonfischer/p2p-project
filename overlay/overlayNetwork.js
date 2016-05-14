@@ -41,6 +41,15 @@ function overlayNetwork(chordring, requests) {
 		});	
 	}
 
+	function getChildren(groupName){
+		var group = searchInGroups(groupName)
+
+		if(!group){
+			return [];
+		}
+		return group.children;
+	}
+
 	function join(groupName, caller, callback, msgHandlerFn) {
 		if(!caller.id){
 			caller.id = _chordring.hashId(caller.ip + caller.port);
@@ -475,6 +484,10 @@ function overlayNetwork(chordring, requests) {
 
 	}
 
+	function get_this(){
+		return _chordring.get_this();
+	}
+
 	setInterval(heartBeatToChildren, 1000);
 
     setInterval(backupSuccessors, 1000);
@@ -487,7 +500,9 @@ function overlayNetwork(chordring, requests) {
 			 multicast : multicast,
 			 groups : _groups,
 			 topics : _topicsList,
-   		     backupGroups : backupGroups };
+   		     backupGroups : backupGroups,
+   		     getChildren : getChildren,
+   		     get_this : get_this };
 
 }
 

@@ -15,9 +15,34 @@ socket.on('newChatMessage', function(msg){
 	$(containerId).scrollTop($(containerId)[0].scrollHeight);
 });
 
+socket.on('childrenNodes', handleChildrenNodes);
+
+function handleChildrenNodes(msg){
+	var children = msg.children;
+	var thisPeer = msg.thisPeer;
+
+	console.log(JSON.stringify(msg))
+	for(i = 0; i < children.length; i++){
 
 
+		nodes.add({id : (parseInt(children[i].port)+1000), label : children[i].id, level : msg.level})
+		edges.add({from : (thisPeer.port + 1000), to: (parseInt(children[i].port)+1000)})
 
+		var socketForPeer = io.connect('http://localhost:' + (parseInt(children[i].port)+1000));
+		socketForPeer.on('childrenNodes', handleChildrenNodes);
+
+		var newLevel = msg.level + 1;
+		socketForPeer.emit('childNodes', { groupName : msg.groupName, level : newLevel})
+		
+		
+	}
+
+}
+
+function createNetworkGraph(groupName){
+	nodes.add({id : port, label : port, level : 0})
+	socket.emit('childNodes', { groupName : groupName, level : 1})
+}
 
 function createChat(groupName){
 	var chatContainer = '<div class="chatContainer" style="display: none;" id="'+ groupName +'">' +
@@ -32,7 +57,8 @@ function createChat(groupName){
 		   		'<input type="submit" value="Send" style="width: 18%">'+
 		    '</form>'+
 		'</div>'+
-	'</div>';
+	'</div>' +
+	'<div id="network'+ groupName + '" style="height: 800px; width: 800px;"></div>';
 
 	$(".chatRooms").append(chatContainer);
 
@@ -45,6 +71,7 @@ function createChat(groupName){
 	  socket.emit('sendmsg', { msg : msg, groupName : groupName})
 	  event.preventDefault();
 	});
+	createNetwork();
 }
 
 
@@ -126,4 +153,36 @@ function prepPageForChat(){
 		$(".topics").hide();
 		$(".successorList").hide();
 	});
+}
+
+
+
+
+
+var nodes;
+var edges;
+function createNetwork(){
+	// create an array with nodes
+	nodes = new vis.DataSet([]);
+
+	// create an array with edges
+	edges = new vis.DataSet([]);
+
+
+
+	// create a network
+	var container = document.getElementById('networklocalhost:4000;test');
+	var data = {
+	nodes: nodes,
+	edges: edges
+	};
+	var options = {
+		layout : {
+			hierarchical : {
+				direction: "UD"
+			}
+		}
+	};
+	var network = new vis.Network(container, data, options);
+	createNetworkGraph("localhost:4000;test")
 }

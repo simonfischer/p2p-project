@@ -54,6 +54,11 @@ function Chat(overlayNetwork) {
         _overlay.create(groupName);
     }
 
+    function sendChildNodes(msg){
+        var children = _overlay.getChildren(msg.groupName);
+        _io.emit("childrenNodes", {groupName : msg.groupName, children : children, thisPeer : _overlay.get_this(), level : msg.level });
+    }
+
     function handleCmd(type, content) {
         // switch on type, handle content depending on type
         // types define command task, ex. 'join' cmd from HTML
@@ -76,6 +81,9 @@ function Chat(overlayNetwork) {
                 // grab groupname, msg and caller from content
                 // call sendMsg()
                 sendMsg(content.groupName, content.msg)
+                break;
+            case 'childNodes':
+                sendChildNodes(content);
                 break;
         }
     }
