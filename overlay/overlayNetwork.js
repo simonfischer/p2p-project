@@ -10,6 +10,8 @@ function overlayNetwork(chordring, requests) {
 
 	var _backupForGroups = {};
 
+	var _topicMessages = {};
+
 	var _kBackups = 3;
 
 
@@ -110,7 +112,6 @@ function overlayNetwork(chordring, requests) {
 	     	group.children.push(caller);
 	     }
 	     var parent = _chordring.closestPreceedingFinger(id);
-	     console.log("calling parent: " + parent.id)
 	     group.parent = parent;
 	     requests.postRequest(parent, '/chat/'+ groupName +'/join', thisPeer ,function(response){
 	            callback(JSON.parse(response));
@@ -167,13 +168,25 @@ function overlayNetwork(chordring, requests) {
 				break;
 
 			case "heartBeat":
+
+			    response("ok");
 				heartBeatFromParent(msg);
+				break;
+
+			case "repairRequest":
+				response("ok")
+				handleRepairRequest(groupName, msg)
+				break;
 		}
 		
 
 	}
 
-	function multicastMsg(groupName, msg, currentPackageCount, caller, response){
+
+	function multicastMsg(groupName, msg, currentPackageCount, caller, response, type){
+		if(typeof type == 'undefined'){
+			type="msg";
+		}
 		if(typeof response == 'string'){
 			console.log("response is a string containing: " + response)
 			//response = function(arg){}
@@ -214,8 +227,6 @@ function overlayNetwork(chordring, requests) {
 					group.rootNode = _nullPeer;
 					multicast(groupName, msg, currentPackageCount, caller, response);
 				});
-
-
 		}else{
 
 			var children = group.children;
@@ -281,36 +292,104 @@ function overlayNetwork(chordring, requests) {
 			}
 
 			
-
-			// update last seen message count
-			var lastSeenPackage = group.lastSeenPackage;
-
-		/*	if((lastSeenPackage + 1) != currentPackageCount){
-				console.log("lastseen " + lastSeenPackage + " current: " + currentPackageCount)
-				repairNetwork();
-
-				return;
-			}else{*/
-			group.lastSeenPackage = currentPackageCount;
-			//}
 			
+			var messageToChilden = { msg : msgToSend, peer : thisPeer, currentPackageCount : newPackageCount, type : type};
+
 			if(_topicsList[groupName]){
-				// if there is a message handler associated with the group name, i.e. we're interested, pass the msg
-				_topicsList[groupName](groupName, msgToSend);
+				if(typeof _topicMessages[groupName] == 'undefined'){
+					_topicMessages[groupName] = [{currentPackageCount : 0}];
+				}
+
+				var lastSeenPackage = _topicMessages[groupName].slice(-1)[0].currentPackageCount;
+
+				if((lastSeenPackage + 1) < currentPackageCount){
+					console.log("lastseen " + lastSeenPackage + " current: " + currentPackageCount)
+					repairNetwork(groupName, currentPackageCount);
+	
+				}
+				else if ((lastSeenPackage+1) == currentPackageCount){
+
+					_topicMessages[groupName].push(messageToChilden);
+		
+					// if there is a message handler associated with the group name, i.e. we're interested, pass the msg
+					_topicsList[groupName](groupName, msgToSend);
+				}
+
 			}
 
 			for(i = 0; i < children.length; i++){
 
-				requests.postRequest(children[i], '/chat/'+ groupName +'/multicast', { msg : msgToSend, peer : thisPeer, currentPackageCount : newPackageCount, type : "msg"} ,function(response){}, 
-					function(){ console.log("")});
+				requests.postRequest(children[i], '/chat/'+ groupName +'/multicast', messageToChilden ,function(response){}, 
+					function(){ console.log("Multicast didnt succeed")});
 			}
 			response("ok");
 		}
 	}
 
-	function repairNetwork(){
+	function repairNetwork(groupName, incommingPackage){
+		var group = searchInGroups(groupName);
 
-		console.log("REPAIR NETWORK");
+		var rootNode = group.rootNode;
+
+		if(rootNode.id == _nullPeer.id){
+			_chordring.find_successor(_chordring.hashId(group.groupName), function(successor){
+				group.rootNode = successor;
+				repairNetwork(groupName);
+			});
+			return;
+		}
+		var lastSeenPackage = _topicMessages[groupName].slice(-1)[0].currentPackageCount + 1;
+
+		var message = { startOfInterval: lastSeenPackage, endOfInterval: incommingPackage}
+		console.log("ASKING ROOTNODE")
+		requests.postRequest(rootNode, '/chat/'+ groupName +'/multicast', 
+			{ msg : message, peer : _chordring.get_this(), type : "repairRequest"},
+
+			function(response){}, 
+			function(){ 
+				group.rootNode = _nullPeer;
+				multicast(groupName, msg, currentPackageCount, caller, response);
+			});
+		
+
+	}
+
+	function handleRepairRequest(groupName, msg){
+		console.log(_chordring.get_this().id + " handleRepairRequest")
+		console.log(JSON.stringify(msg))
+		var startOfInterval = msg.startOfInterval;
+		var endOfInterval = msg.endOfInterval;
+		var group = searchInGroups(groupName);
+
+
+		if(_topicMessages[groupName]){
+
+			var lastSeenPackage = _topicMessages[groupName].slice(-1)[0].currentPackageCount;
+
+			console.log("my lastSeenPackage " + lastSeenPackage + " end of interval: " + endOfInterval)
+
+			if(lastSeenPackage >= endOfInterval){
+
+
+				console.log("I GOT THE MESSAGES")
+				return;
+
+			}
+
+
+		}
+
+		var children = group.children;
+
+
+		var messageToSend = { msg : msg, peer : _chordring.get_this(), type : "repairRequest"};
+
+
+		for(i = 0; i < children.length; i++){
+			console.log("Asking child number: " + i)
+			requests.postRequest(children[i], '/chat/'+ groupName +'/multicast', messageToSend,function(response){}, 
+				function(){ console.log("Multicast didnt succeed")});
+		}
 	}
 
 
@@ -472,17 +551,22 @@ function overlayNetwork(chordring, requests) {
 
 	function heartBeatToChildren(){
 		var thisPeer = _chordring.get_this();
+
 		for(i = 0; i < _groups.length; i++){
-			for(j = 0; j < 
-				_groups[i].children.length; j++){
+			for(j = _groups[i].children.length-1; j >= 0; j--){
 				var child = _groups[i].children[j];	
-			
+				var currentChildList = _groups[i].children;
 				requests.postRequest(child, '/chat/'+ child.groupName +'/multicast', { msg : _groups[i].groupName, peer : thisPeer, type : "heartBeat"} ,function(response){}, 
-					function(){ console.log("")});
+					function(){
+						deleteInChildren({id : child.id}, currentChildList)
+
+						console.log("I am " + thisPeer.id + " Heartbeat failed, tried to contact " + child.id)
+					});
 			}
 		}
 
 	}
+
 
 	function get_this(){
 		return _chordring.get_this();

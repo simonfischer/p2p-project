@@ -184,5 +184,11 @@ function createNetwork(){
 		}
 	};
 	var network = new vis.Network(container, data, options);
+
+	network.on("selectNode", function(params){
+		socket.emit('forceQuitNode', {node : (parseInt(params.nodes[0])-1000) })
+		console.log("delete " + (parseInt(params.nodes[0])-1000))
+	});
+
 	createNetworkGraph("localhost:4000;test")
 }

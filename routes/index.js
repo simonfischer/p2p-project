@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+var exec = require('child_process').exec;
 
 var http = require('http').Server(router);
 var io = require('socket.io')(http);
@@ -41,6 +42,14 @@ io.on('connection', function(socket){
       chat.handleCmd("childNodes", msg);
     }
   });
+
+  socket.on('forceQuitNode', function(msg){ 
+    var nodePortToQuit = msg.node;
+    console.log("quitting : " + nodePortToQuit)
+    exec('lsof -t -i tcp:' + nodePortToQuit + ' | xargs kill')
+  });
+
+  
 });
 
 var port = 1000 + parseInt(process.env.PORT);
