@@ -177,7 +177,12 @@ function overlayNetwork(chordring, requests) {
 				response("ok")
 				handleRepairRequest(groupName, msg)
 				break;
-		}
+			case "firstAidRequest":
+
+				response("ok")
+				handleFirstAidRequest(groupName, msg);
+				break;
+		}	
 		
 
 	}
@@ -341,22 +346,70 @@ function overlayNetwork(chordring, requests) {
 		var lastSeenPackage = _topicMessages[groupName].slice(-1)[0].currentPackageCount + 1;
 
 		var message = { startOfInterval: lastSeenPackage, endOfInterval: incommingPackage}
-		console.log("ASKING ROOTNODE")
+
 		requests.postRequest(rootNode, '/chat/'+ groupName +'/multicast', 
 			{ msg : message, peer : _chordring.get_this(), type : "repairRequest"},
 
 			function(response){}, 
 			function(){ 
 				group.rootNode = _nullPeer;
-				multicast(groupName, msg, currentPackageCount, caller, response);
+				repairNetwork(groupName, incommingPackage);
 			});
 		
 
 	}
 
+	function handleFirstAidRequest(groupName, msg){
+		console.log(_chordring.get_this().id + " recieved firstAidRequest")
+
+
+		var group = searchInGroups(groupName);
+
+		var children = group.children;
+
+
+		var messageToSend = { msg : msg, peer : _chordring.get_this(), type : "firstAidRequest"};
+
+		checkForUpdates(groupName, msg.messages);
+
+		for(i = 0; i < children.length; i++){
+			console.log("Asking child number: " + i)
+			requests.postRequest(children[i], '/chat/'+ groupName +'/multicast', messageToSend,function(response){}, 
+				function(){ console.log("Multicast didnt succeed")});
+		}
+
+	}
+
+	function checkForUpdates(groupName, messages){
+
+
+		var group = searchInGroups(groupName);
+
+		var currentMessageList = _topicMessages[groupName];
+
+		if(typeof currentMessageList != 'undefined'){
+			
+			
+
+			for(i = 0; i < messages.length; i++){
+				var currentNewest = _topicMessages[groupName].slice(-1)[0].currentPackageCount;
+				
+				var newestMessage = messages[i].currentPackageCount;
+
+				if(newestMessage > currentNewest){
+					_topicMessages[groupName].push(messages[i]);
+					console.log(JSON.stringify(messages[i]))
+					_topicsList[groupName](groupName, messages[i].msg);
+
+				}
+
+			}
+
+		}
+
+	}
+
 	function handleRepairRequest(groupName, msg){
-		console.log(_chordring.get_this().id + " handleRepairRequest")
-		console.log(JSON.stringify(msg))
 		var startOfInterval = msg.startOfInterval;
 		var endOfInterval = msg.endOfInterval;
 		var group = searchInGroups(groupName);
@@ -366,12 +419,32 @@ function overlayNetwork(chordring, requests) {
 
 			var lastSeenPackage = _topicMessages[groupName].slice(-1)[0].currentPackageCount;
 
-			console.log("my lastSeenPackage " + lastSeenPackage + " end of interval: " + endOfInterval)
-
 			if(lastSeenPackage >= endOfInterval){
 
+				var listToSend  = _topicMessages[groupName].slice(startOfInterval, (endOfInterval + 1))
+				
+				
+				if(group.rootNode.id == _nullPeer.id){
+					_chordring.find_successor(_chordring.hashId(group.groupName), function(successor){
+						group.rootNode = successor;
+						handleRepairRequest(groupName, msg);
+					});
+					return;
+				}
+				var lastSeenPackage = _topicMessages[groupName].slice(-1)[0].currentPackageCount + 1;
 
-				console.log("I GOT THE MESSAGES")
+				var message = { messages : listToSend }
+				console.log("sending firstAid request")
+				requests.postRequest(group.rootNode, '/chat/'+ groupName +'/multicast', 
+					{ msg : message, peer : _chordring.get_this(), type : "firstAidRequest"},
+
+					function(response){}, 
+					function(){ 
+						group.rootNode = _nullPeer;
+						handleRepairRequest(groupName, msg);
+					});
+
+
 				return;
 
 			}
@@ -386,7 +459,6 @@ function overlayNetwork(chordring, requests) {
 
 
 		for(i = 0; i < children.length; i++){
-			console.log("Asking child number: " + i)
 			requests.postRequest(children[i], '/chat/'+ groupName +'/multicast', messageToSend,function(response){}, 
 				function(){ console.log("Multicast didnt succeed")});
 		}

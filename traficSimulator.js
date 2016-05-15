@@ -18,12 +18,12 @@ for(i = 0; i < numberOfPeers; i++){
 }
 
 
-sockets[0].emit('create', { groupName : "test"})
+sockets[0].emit('create', { groupName : "test2"})
 
 
 
 function joinGroup(i){
-	sockets[i].emit('join', { groupName : "localhost:4000;test"})
+	sockets[i].emit('join', { groupName : "localhost:4000;test2"})
 	sockets[i].on('newChatMessage', function(msg){ 
 		console.log("timelaps: " + (Date.now() - msg.msg));
 	});
@@ -44,7 +44,7 @@ function bloatWithMessages(){
 	for(j = 0; j < numberOfRuns; j++){
 		for(i = 0; i < numberOfPeers; i++){
 			console.log(" j : " + j + "    i : " + i)
-			sockets[i].emit('sendmsg', { msg : Date.now(), groupName : "localhost:4000;test"})
+			sockets[i].emit('sendmsg', { msg : Date.now(), groupName : "localhost:4000;test2"})
 		}
 	}
 

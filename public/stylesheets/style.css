@@ -333,7 +333,8 @@ a:hover, a:visited, a:link, a:active
 
 
 .listOfChats{
-	clear:both
+	clear:both;
+	font-size: 11px;
 }
 
 .middleOfBar

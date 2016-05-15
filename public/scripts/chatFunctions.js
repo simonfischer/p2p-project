@@ -4,6 +4,7 @@ var socket = io.connect('http://localhost:' + port);
 socket.on('newChatJoined', function(msg){
 	var chats = msg.listOfChats;		
 	$(".listOfChats").append('<div class="chatRoom">'+ msg.groupName +'</div>')
+	$(".listOfChats").append('<div class="chatRoom">network'+ msg.groupName +'</div>')
 	createChat(msg.groupName);
 
 });
@@ -17,30 +18,34 @@ socket.on('newChatMessage', function(msg){
 
 socket.on('childrenNodes', handleChildrenNodes);
 
+var sockets = {};
+
 function handleChildrenNodes(msg){
 	var children = msg.children;
 	var thisPeer = msg.thisPeer;
-
-	console.log(JSON.stringify(msg))
+	var groupName = msg.groupName;
 	for(i = 0; i < children.length; i++){
+		var port = (parseInt(children[i].port)+1000);
+		nodes[groupName].add({id : (parseInt(children[i].port)+1000), label : children[i].id, level : msg.level})
+		edges[groupName].add({from : (thisPeer.port + 1000), to: (parseInt(children[i].port)+1000)})
 
+		var socketName = groupName + "" + port;
 
-		nodes.add({id : (parseInt(children[i].port)+1000), label : children[i].id, level : msg.level})
-		edges.add({from : (thisPeer.port + 1000), to: (parseInt(children[i].port)+1000)})
-
-		var socketForPeer = io.connect('http://localhost:' + (parseInt(children[i].port)+1000));
-		socketForPeer.on('childrenNodes', handleChildrenNodes);
-
+		if(typeof sockets[socketName] == 'undefined'){
+			sockets[socketName] = io.connect('http://localhost:' + port);
+			sockets[socketName].on('childrenNodes', handleChildrenNodes);
+		}
 		var newLevel = msg.level + 1;
-		socketForPeer.emit('childNodes', { groupName : msg.groupName, level : newLevel})
+
+
+		sockets[socketName].emit('childNodes', { groupName : msg.groupName, level : newLevel})
 		
 		
 	}
-
 }
 
 function createNetworkGraph(groupName){
-	nodes.add({id : port, label : port, level : 0})
+	nodes[groupName].add({id : port, label : port, level : 0})
 	socket.emit('childNodes', { groupName : groupName, level : 1})
 }
 
@@ -58,7 +63,7 @@ function createChat(groupName){
 		    '</form>'+
 		'</div>'+
 	'</div>' +
-	'<div id="network'+ groupName + '" style="height: 800px; width: 800px;"></div>';
+	'<div class="chatContainer" id="network'+ groupName + '" style="display: none; height: 90%; width: 800px;"></div>';
 
 	$(".chatRooms").append(chatContainer);
 
@@ -71,7 +76,7 @@ function createChat(groupName){
 	  socket.emit('sendmsg', { msg : msg, groupName : groupName})
 	  event.preventDefault();
 	});
-	createNetwork();
+	createNetwork(groupName);
 }
 
 
@@ -79,21 +84,23 @@ function createChat(groupName){
 
 socket.on('initialChats', function(msg){
 	var chats = msg.listOfChats;
+	console.log("chats: " + chats.length)
 	for (i = 0; i < chats.length; i++){
-
+		console.log("chat groupname: " + chats[i].groupName)
 		$(".listOfChats").append('<div class="chatRoom">'+ chats[i].groupName +'</div>')
+
+		$(".listOfChats").append('<div class="chatRoom">network'+ chats[i].groupName +'</div>')
 		var chatMessages = chats[i].messages;
 		createChat(chats[i].groupName);
 
 		if(typeof chatMessages == 'undefined'){
-			return;
+			continue;
 		}
 		var containerId = '.chatContainer[id="'+chats[i].groupName+'"] .messageContainer';
 		for(j = 0; j < chatMessages.length; j++){
 			$(containerId)
 			.append('<div class="message">'+ chatMessages[j]+'</div>')
 		}
-		console.log("scroll to top")
 
 
 	}
@@ -144,14 +151,20 @@ function prepPageForChat(){
 		}
 		$('.chatContainer[id="'+groupName+'"]').show()
 		
+		for (var key in network){
+			network[key].fit()
+		}
+
 		var containerId = '.chatContainer[id="'+groupName+'"] .messageContainer';
-		$(containerId).scrollTop($(containerId)[0].scrollHeight);
-
-
+		
 		$(".fingerTable").hide();
 		$(".groups").hide();
 		$(".topics").hide();
 		$(".successorList").hide();
+		$(containerId).scrollTop($(containerId)[0].scrollHeight);
+
+
+		
 	});
 }
 
@@ -159,36 +172,50 @@ function prepPageForChat(){
 
 
 
-var nodes;
-var edges;
-function createNetwork(){
+var nodes = {};
+var edges = {};
+var network = {};
+
+
+
+function createNetwork(groupName){
 	// create an array with nodes
-	nodes = new vis.DataSet([]);
+	nodes[groupName] = new vis.DataSet([]);
 
 	// create an array with edges
-	edges = new vis.DataSet([]);
+	edges[groupName] = new vis.DataSet([]);
 
 
 
 	// create a network
-	var container = document.getElementById('networklocalhost:4000;test');
+	var container = document.getElementById('network'+groupName);
 	var data = {
-	nodes: nodes,
-	edges: edges
+	nodes: nodes[groupName],
+	edges: edges[groupName]
 	};
 	var options = {
+		autoResize: true,
+		height: '100%',
+ 		width: '100%',
+ 		/*physics: {
+            enabled: false
+        },*/
+ 		//interaction: {dragNodes :false},
+
 		layout : {
 			hierarchical : {
 				direction: "UD"
 			}
 		}
 	};
-	var network = new vis.Network(container, data, options);
 
-	network.on("selectNode", function(params){
+	network[groupName] = new vis.Network(container, data, options);
+
+	network[groupName].on("selectNode", function(params){
 		socket.emit('forceQuitNode', {node : (parseInt(params.nodes[0])-1000) })
-		console.log("delete " + (parseInt(params.nodes[0])-1000))
+
 	});
 
-	createNetworkGraph("localhost:4000;test")
+
+	createNetworkGraph(groupName)
 }
