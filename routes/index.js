@@ -39,7 +39,7 @@ io.on('connection', function(socket){
 
   socket.on('childNodes', function(msg){ 
     if(chat != null){
-      chat.handleCmd("childNodes", msg);
+      chat.handleCmd("childNodes", msg, socket);
     }
   });
 

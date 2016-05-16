@@ -14,6 +14,8 @@ function overlayNetwork(chordring, requests) {
 
 	var _kBackups = 3;
 
+	var _level = {};
+
 
 	// Functionality moved to chat.js
 	// function createGroupByName(name){
@@ -597,20 +599,21 @@ function overlayNetwork(chordring, requests) {
 	var _lastHeartBeat = {};
 
 	function heartBeatFromParent(msg){
-		_lastHeartBeat[msg] = new Date().getTime();
+		if(typeof msg.level != 'undefined'){
+			_level[msg.groupName] = msg.level + 1;
+		}
+		_lastHeartBeat[msg.groupName] = new Date().getTime();
 	}
 
 	function checkHeartBeat(){
 		var thisPeer = _chordring.get_this();
 		for(i = 0; i < _groups.length; i++){
 			var groupName = _groups[i].groupName;
-
 			if(typeof _lastHeartBeat[groupName] == 'undefined'){
 				return;
 			}
 			if (new Date().getTime() - _lastHeartBeat[groupName] > 10000){
 				_lastHeartBeat[groupName] = undefined;
-				console.log("JOINING")
 				join(groupName, thisPeer, function(){}, _topicsList[groupName]);
 
 			}
@@ -628,7 +631,13 @@ function overlayNetwork(chordring, requests) {
 			for(j = _groups[i].children.length-1; j >= 0; j--){
 				var child = _groups[i].children[j];	
 				var currentChildList = _groups[i].children;
-				requests.postRequest(child, '/chat/'+ child.groupName +'/multicast', { msg : _groups[i].groupName, peer : thisPeer, type : "heartBeat"} ,function(response){}, 
+				if(_groups[i].rootNode.id == thisPeer.id){
+					_level[_groups[i].groupName] = 1;
+				}
+
+
+
+				requests.postRequest(child, '/chat/'+ _groups[i].groupName +'/multicast', { msg : {groupName : _groups[i].groupName, level : _level[_groups[i].groupName]}, peer : thisPeer, type : "heartBeat"} ,function(response){}, 
 					function(){
 						deleteInChildren({id : child.id}, currentChildList)
 

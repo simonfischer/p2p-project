@@ -45,7 +45,8 @@ function handleChildrenNodes(msg){
 }
 
 function createNetworkGraph(groupName){
-	nodes[groupName].add({id : port, label : port, level : 0})
+	var label = $('.peerInformation[id="thisPeer"] p').text();
+	nodes[groupName].add({id : port, label : label, level : 0})
 	socket.emit('childNodes', { groupName : groupName, level : 1})
 }
 

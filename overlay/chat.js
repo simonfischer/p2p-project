@@ -54,12 +54,12 @@ function Chat(overlayNetwork) {
         _overlay.create(groupName);
     }
 
-    function sendChildNodes(msg){
+    function sendChildNodes(msg, socket){
         var children = _overlay.getChildren(msg.groupName);
-        _io.emit("childrenNodes", {groupName : msg.groupName, children : children, thisPeer : _overlay.get_this(), level : msg.level });
+        socket.emit("childrenNodes", {groupName : msg.groupName, children : children, thisPeer : _overlay.get_this(), level : msg.level });
     }
 
-    function handleCmd(type, content) {
+    function handleCmd(type, content, socket) {
         // switch on type, handle content depending on type
         // types define command task, ex. 'join' cmd from HTML
         switch(type) {
@@ -83,7 +83,7 @@ function Chat(overlayNetwork) {
                 sendMsg(content.groupName, content.msg)
                 break;
             case 'childNodes':
-                sendChildNodes(content);
+                sendChildNodes(content, socket);
                 break;
         }
     }
