@@ -17,6 +17,7 @@ router.post('/:name/join', function(req, res, next){
 });
 
 router.post('/:id/leave', function(req, res, next){
+  res.setHeader('Access-Control-Allow-Origin', "*")
   var overlayNetwork = req.app.get('overlayNetwork');
   var id = req.params.id;
   var peer = req.body;
@@ -31,16 +32,32 @@ router.post('/:id/multicast', function(req, res, next){
   var peer = req.body.peer;
   var type = req.body.type;
   var currentPackageCount = req.body.currentPackageCount;
-  overlayNetwork.multicast(id, msg, currentPackageCount, peer, function (status){
-    if(status != "error"){
-      res.send(JSON.stringify({status : "ok"}));
-    }else{
-      res.status(541).send('Something broke!');
-    }
-  }, type);  
+  overlayNetwork.multicast(id, msg, currentPackageCount, peer, statusCallback(res), type);  
 
 
 });
+
+function statusCallback(res){
+
+    var isCalled = false;
+
+    function reportStatus(status){
+      if(!isCalled){
+        if(status != "error"){
+          res.send(JSON.stringify({status : "ok"}));
+        }else{
+          res.status(541).send('Something broke!');
+        }
+        isCalled = true;
+      }else{
+        console.log("You are trying to send a status multiple times")
+      }
+      
+    }
+
+    return reportStatus;
+
+}
 
 router.put('/updateBackup', function(req, res, next){
   var overlayNetwork = req.app.get('overlayNetwork');

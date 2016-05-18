@@ -1,7 +1,7 @@
 var io = require('socket.io-client');
 
 var numberOfPeers = 10;
-var numberOfRuns = 0;
+var numberOfRuns = 1;
 
 var sockets = [];
 
@@ -28,7 +28,7 @@ function joinGroup(i){
 		console.log("timelaps: " + (Date.now() - msg.msg));
 	});
 
-	i = i + 1;	
+	i = i + 2;	
 	if(i < numberOfPeers){
 		setTimeout(function(){
 			joinGroup(i);
@@ -50,7 +50,7 @@ function bloatWithMessages(){
 
 }
 setTimeout(function(){
-	joinGroup(0);
+	joinGroup(1);
 }, 500);
 
 

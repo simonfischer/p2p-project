@@ -19,15 +19,28 @@ socket.on('newChatMessage', function(msg){
 socket.on('childrenNodes', handleChildrenNodes);
 
 var sockets = {};
-
+var node;
 function handleChildrenNodes(msg){
 	var children = msg.children;
 	var thisPeer = msg.thisPeer;
 	var groupName = msg.groupName;
+	var interested = msg.interested;
+	var color = "#66ccff";
+	if(interested){
+		color = "#ccff99";
+	}
+
+
+	nodes[groupName].update({id : (thisPeer.port + 1000), label : thisPeer.id, color : color})
+
 	for(i = 0; i < children.length; i++){
 		var port = (parseInt(children[i].port)+1000);
-		nodes[groupName].add({id : (parseInt(children[i].port)+1000), label : children[i].id, level : msg.level})
+
+		nodes[groupName].update({id : (parseInt(children[i].port)+1000), label : children[i].id, level : msg.level})
 		edges[groupName].add({from : (thisPeer.port + 1000), to: (parseInt(children[i].port)+1000)})
+		
+
+		
 
 		var socketName = groupName + "" + port;
 
@@ -44,9 +57,20 @@ function handleChildrenNodes(msg){
 	}
 }
 
+var ctrlPressed = false;
+$(window).keydown(function(evt) {
+  if (evt.which == 17) { // ctrl
+    ctrlPressed = true;
+  }
+}).keyup(function(evt) {
+  if (evt.which == 17) { // ctrl
+    ctrlPressed = false;
+  }
+});
+
 function createNetworkGraph(groupName){
 	var label = $('.peerInformation[id="thisPeer"] p').text();
-	nodes[groupName].add({id : port, label : label, level : 0})
+	nodes[groupName].update({id : port, label : label, level : 0})
 	socket.emit('childNodes', { groupName : groupName, level : 1})
 }
 
@@ -213,10 +237,14 @@ function createNetwork(groupName){
 	network[groupName] = new vis.Network(container, data, options);
 
 	network[groupName].on("selectNode", function(params){
-		socket.emit('forceQuitNode', {node : (parseInt(params.nodes[0])-1000) })
+
+		if(ctrlPressed){
+			socket.emit('forceQuitNode', {node : (parseInt(params.nodes[0])-1000) })
+		}else{
+			$.post( "http://localhost:"+(parseInt(params.nodes[0])-1000)+"/chat/"+groupName+"/leave", { id : nodes[groupName].get(params.nodes[0]).label, ip : "localhost", port :  (parseInt(params.nodes[0])-1000)}, function( data ) {});
+		}
 
 	});
-
-
+	
 	createNetworkGraph(groupName)
 }

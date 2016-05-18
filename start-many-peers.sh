@@ -1,3 +1,6 @@
+killall node
+killall npm
+
 PEERS=$1
 LASTPEER=`expr 4000 + $PEERS - 1`
 

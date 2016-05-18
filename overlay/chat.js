@@ -56,7 +56,13 @@ function Chat(overlayNetwork) {
 
     function sendChildNodes(msg, socket){
         var children = _overlay.getChildren(msg.groupName);
-        socket.emit("childrenNodes", {groupName : msg.groupName, children : children, thisPeer : _overlay.get_this(), level : msg.level });
+        var topics = _overlay.topics;
+        var interested = false;
+        if(typeof topics[msg.groupName] != 'undefined'){
+            interested = true;
+        }
+        
+        socket.emit("childrenNodes", {groupName : msg.groupName, children : children, thisPeer : _overlay.get_this(), level : msg.level, interested : interested });
     }
 
     function handleCmd(type, content, socket) {

@@ -61,6 +61,7 @@ function handleBaseDesign(req, res, next){
   var overlayNetwork = req.app.get('overlayNetwork');
 
   console.log(JSON.stringify(peer.get_this()));
+  
   res.render('index', 
     {thisPeer : peer.get_this() ,
     succ : peer.get_successor(), 
