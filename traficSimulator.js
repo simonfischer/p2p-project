@@ -50,7 +50,7 @@ function bloatWithMessages(){
 
 }
 setTimeout(function(){
-	joinGroup(1);
+	joinGroup(0);
 }, 500);
 
 
