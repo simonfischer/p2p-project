@@ -41,7 +41,7 @@ app.use('/', routes);
 app.use('/users', users);
 
 app.use('/peerRequests', peerRequests);
-app.use('/chat', overlayNetworkRequests);
+app.use('/overlayNetwork', overlayNetworkRequests);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

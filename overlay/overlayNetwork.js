@@ -39,7 +39,7 @@ function overlayNetwork(chordring, requests) {
 				_groups.push({groupName : groupName, children : [], rootNode : thisPeer, currentPackageCount : 1, lastSeenPackage : 0, parent : _nullPeer});
 
 			}else{
-				requests.postRequest(successor, '/chat/'+groupName+'/create', {}, 
+				requests.postRequest(successor, '/overlayNetwork/'+groupName+'/create', {}, 
 					function(){}, 
 					function(){
 						console.log("Create Request not successfull")
@@ -119,11 +119,11 @@ function overlayNetwork(chordring, requests) {
 	     }
 	     var parent = _chordring.closestPreceedingFinger(id);
 	     group.parent = parent;
-	     requests.postRequest(parent, '/chat/'+ groupName +'/join', thisPeer ,function(response){
+	     requests.postRequest(parent, '/overlayNetwork/'+ groupName +'/join', thisPeer ,function(response){
 	            callback(JSON.parse(response));
 	      }, function(){ 
 
-	      	requests.postRequest(_chordring.get_successor(), '/chat/'+ groupName +'/join', thisPeer ,function(response){
+	      	requests.postRequest(_chordring.get_successor(), '/overlayNetwork/'+ groupName +'/join', thisPeer ,function(response){
 	            callback(JSON.parse(response));}, function(){});
 
 	      });
@@ -160,7 +160,7 @@ function overlayNetwork(chordring, requests) {
 			return;
 		}
 
-		requests.postRequest(parent, '/chat/'+ groupName +'/leave', thisPeer ,function(response){}, 
+		requests.postRequest(parent, '/overlayNetwork/'+ groupName +'/leave', thisPeer ,function(response){}, 
 			function(){ console.log("Error post requesting to closestPreceedingFinger in chatOverlay")});
 	}
 
@@ -235,7 +235,7 @@ function overlayNetwork(chordring, requests) {
 			return;
 		}
 		if(thisPeer.id == caller.id && thisPeer.id != rootNode.id){
-			requests.postRequest(rootNode, '/chat/'+ groupName +'/multicast', { msg : msg, peer : thisPeer, currentPackageCount : currentPackageCount} ,function(response){}, 
+			requests.postRequest(rootNode, '/overlayNetwork/'+ groupName +'/multicast', { msg : msg, peer : thisPeer, currentPackageCount : currentPackageCount} ,function(response){}, 
 				function(){ 
 					group.rootNode = _nullPeer;
 					multicast(groupName, msg, currentPackageCount, caller, response);
@@ -286,7 +286,7 @@ function overlayNetwork(chordring, requests) {
 							multicast(groupName, msg, currentPackageCount, caller, response)
 							return;
 						}
-						requests.postRequest(parent, '/chat/'+ groupName +'/leave', thisPeer ,function(responseCode){
+						requests.postRequest(parent, '/overlayNetwork/'+ groupName +'/leave', thisPeer ,function(responseCode){
 							group.parent = _nullPeer;
 							multicast(groupName, msg, currentPackageCount, caller, response)
 						}, 
@@ -332,7 +332,7 @@ function overlayNetwork(chordring, requests) {
 
 			for(i = 0; i < children.length; i++){
 
-				requests.postRequest(children[i], '/chat/'+ groupName +'/multicast', messageToChilden ,function(response){}, 
+				requests.postRequest(children[i], '/overlayNetwork/'+ groupName +'/multicast', messageToChilden ,function(response){}, 
 					function(){ console.log("Multicast didnt succeed")});
 			}
 			response("ok");
@@ -428,7 +428,7 @@ function overlayNetwork(chordring, requests) {
 
 		var message = { startOfInterval: lastSeenPackage, endOfInterval: incommingPackage}
 
-		requests.postRequest(rootNode, '/chat/'+ groupName +'/multicast', 
+		requests.postRequest(rootNode, '/overlayNetwork/'+ groupName +'/multicast', 
 			{ msg : message, peer : _chordring.get_this(), type : "repairRequest"},
 
 			function(response){}, 
@@ -448,7 +448,7 @@ function overlayNetwork(chordring, requests) {
 		var messageToSend = { msg : msg, peer : _chordring.get_this(), type : "firstAidRequest"};
 		checkForUpdates(groupName, msg.messages);
 		for(i = 0; i < children.length; i++){
-			requests.postRequest(children[i], '/chat/'+ groupName +'/multicast', messageToSend,function(response){}, 
+			requests.postRequest(children[i], '/overlayNetwork/'+ groupName +'/multicast', messageToSend,function(response){}, 
 				function(){ console.log("Multicast didnt succeed")});
 		}
 
@@ -528,7 +528,7 @@ function overlayNetwork(chordring, requests) {
 						return;
 					}
 
-					requests.postRequest(group.rootNode, '/chat/'+ groupName +'/multicast', 
+					requests.postRequest(group.rootNode, '/overlayNetwork/'+ groupName +'/multicast', 
 						{ msg : message, peer : _chordring.get_this(), type : "firstAidRequest"},
 
 						function(response){}, 
@@ -554,7 +554,7 @@ function overlayNetwork(chordring, requests) {
 
 
 		for(i = 0; i < children.length; i++){
-			requests.postRequest(children[i], '/chat/'+ groupName +'/multicast', messageToSend,function(response){}, 
+			requests.postRequest(children[i], '/overlayNetwork/'+ groupName +'/multicast', messageToSend,function(response){}, 
 				function(){ console.log("Multicast didnt succeed")});
 		}
 	}
@@ -611,7 +611,7 @@ function overlayNetwork(chordring, requests) {
 
 	    var data = {ithPeer : _kBackups, groups : groups, originator : thisPeer}
 
-	    requests.putRequest(successor, '/chat/updateBackup', data , function(response){});
+	    requests.putRequest(successor, '/overlayNetwork/updateBackup', data , function(response){});
 	}
 
 	function groupsForRootNode(){
@@ -641,7 +641,7 @@ function overlayNetwork(chordring, requests) {
 
 		if(ithPeer > 0){
 			backupData.ithPeer = ithPeer;
-			requests.putRequest(successor, '/chat/updateBackup', backupData, function(response){});
+			requests.putRequest(successor, '/overlayNetwork/updateBackup', backupData, function(response){});
 		}
 
 	}
@@ -680,8 +680,8 @@ function overlayNetwork(chordring, requests) {
 
 		var data = {ithPeer : 0, groups : [group]}
 
-		requests.putRequest(predecessor, '/chat/updateBackup', data , function(response){
-			requests.postRequest(predecessor, '/chat/'+ group.groupName +'/join', thisPeer ,function(response){}, 
+		requests.putRequest(predecessor, '/overlayNetwork/updateBackup', data , function(response){
+			requests.postRequest(predecessor, '/overlayNetwork/'+ group.groupName +'/join', thisPeer ,function(response){}, 
 				function(){ console.log("Error post requesting to closestPreceedingFinger in chatOverlay")});
 		});
 	}
@@ -755,7 +755,7 @@ function overlayNetwork(chordring, requests) {
 
 
 
-				requests.postRequest(child, '/chat/'+ _groups[i].groupName +'/multicast', { msg : {groupName : _groups[i].groupName, level : _level[_groups[i].groupName]}, peer : thisPeer, type : "heartBeat"} ,function(response){}, 
+				requests.postRequest(child, '/overlayNetwork/'+ _groups[i].groupName +'/multicast', { msg : {groupName : _groups[i].groupName, level : _level[_groups[i].groupName]}, peer : thisPeer, type : "heartBeat"} ,function(response){}, 
 					function(){
 						deleteInChildren({id : child.id}, currentChildList)
 					});
