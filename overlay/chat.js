@@ -91,7 +91,17 @@ function Chat(overlayNetwork) {
             case 'childNodes':
                 sendChildNodes(content, socket);
                 break;
+
+            case 'level':
+                returnLevel(content.groupName, socket)
+                break;
         }
+    }
+
+    function returnLevel(groupName, socket){
+        var level = _overlay.getLevel(groupName)
+        socket.emit("levelValue", {groupName : groupName, thisPeer : _overlay.get_this(), level : level});
+
     }
 
     return { handleCmd : handleCmd,

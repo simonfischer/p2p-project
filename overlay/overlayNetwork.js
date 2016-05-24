@@ -17,6 +17,7 @@ function overlayNetwork(chordring, requests) {
 
 	var _level = {};
 
+
 	var _repairNetworkRequests = {};
 
 	var _firstAidRequests = {};
@@ -769,11 +770,18 @@ function overlayNetwork(chordring, requests) {
 		return _chordring.get_this();
 	}
 
+	function getLevel(groupName){
+		return _level[groupName];
+	}
+
 	setInterval(heartBeatToChildren, 1000);
 
     setInterval(backupSuccessors, 1000);
 
     setInterval(checkHeartBeat, 5000)
+
+
+
 
 	return { create : create,
 			 join : join,
@@ -783,7 +791,8 @@ function overlayNetwork(chordring, requests) {
 			 topics : _topicsList,
    		     backupGroups : backupGroups,
    		     getChildren : getChildren,
-   		     get_this : get_this };
+   		     get_this : get_this,
+   		     getLevel : getLevel };
 
 }
 

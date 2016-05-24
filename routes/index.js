@@ -43,6 +43,12 @@ io.on('connection', function(socket){
     }
   });
 
+  socket.on('level', function(msg){ 
+    if(chat != null){
+      chat.handleCmd("level", msg, socket);
+    }
+  });
+
   socket.on('forceQuitNode', function(msg){ 
     var nodePortToQuit = msg.node;
     console.log("quitting : " + nodePortToQuit)
