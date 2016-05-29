@@ -77,6 +77,7 @@ function Chat(overlayNetwork) {
             case 'leave':
                 // grab groupname and caller from content
                 // call leave()
+                _overlay.leave(content.groupName, _overlay.get_this())
                 break;
             case 'create':
                 // grab groupname from content

@@ -1,0 +1,65 @@
+testede med 15 peers. Graph: 15Peers.png
+1281 & 1014 mister den samme besked
+
+
+var _c1 = 0;							var _c1 = 0;						var _c1 = 0;				
+var _c2 = 0;							var _c2 = 5;						var _c2 = 10;
+SEND REPAIR REQUEST i am 1014			SEND REPAIR REQUEST i am 1014		SEND REPAIR REQUEST i am 1014
+SEND REPAIR REQUEST i am 1281			SEND REPAIR REQUEST i am 1281		SEND REPAIR REQUEST i am 1281
+SEND REPAIR REQUEST i am 3120			SEND REPAIR REQUEST i am 2973		
+SEND REPAIR REQUEST i am 96				SEND REPAIR REQUEST i am 4014
+SEND REPAIR REQUEST i am 2973
+SEND REPAIR REQUEST i am 4014
+
+	
+var _c1 = 5;							var _c1 = 5;						var _c1 = 5;
+var _c2 = 0;							var _c2 = 5;						var _c2 = 10;
+SEND REPAIR REQUEST i am 1340			SEND REPAIR REQUEST i am 1281		SEND REPAIR REQUEST i am 1014
+SEND REPAIR REQUEST i am 3456			SEND REPAIR REQUEST i am 1014		SEND REPAIR REQUEST i am 1281
+SEND REPAIR REQUEST i am 3456			SEND REPAIR REQUEST i am 4014		SEND REPAIR REQUEST i am 96
+SEND REPAIR REQUEST i am 1281			SEND REPAIR REQUEST i am 3215		SEND REPAIR REQUEST i am 3215
+SEND REPAIR REQUEST i am 1014			SEND REPAIR REQUEST i am 96
+SEND REPAIR REQUEST i am 2973
+SEND REPAIR REQUEST i am 4014
+
+var _c1 = 10;							var _c1 = 10;						var _c1 = 10;
+var _c2 = 0;							var _c2 = 5;						var _c2 = 10;
+SEND REPAIR REQUEST i am 1014			SEND REPAIR REQUEST i am 1014		SEND REPAIR REQUEST i am 1014
+SEND REPAIR REQUEST i am 1281			SEND REPAIR REQUEST i am 1281		SEND REPAIR REQUEST i am 1281
+SEND REPAIR REQUEST i am 2973			SEND REPAIR REQUEST i am 2973
+SEND REPAIR REQUEST i am 4014
+
+var _c1 = 15;							var _c1 = 15;						var _c1 = 15;
+var _c2 = 0;							var _c2 = 5;						var _c2 = 10;
+SEND REPAIR REQUEST i am 1014			SEND REPAIR REQUEST i am 1281		SEND REPAIR REQUEST i am 1281
+SEND REPAIR REQUEST i am 1281												SEND REPAIR REQUEST i am 1014
+
+
+
+	|  0  |  5  | 10  _c2
+----|-----|-----|-----
+  0 |  6  |	 4  |  2
+  5	|  7  |	 5  |  4
+ 10 |  4  |  3  |  2
+ 15 |  2  |  1  |  2
+ _c1
+
+
+
+
+
+
+
+
+
+testede med 15 peers. Graph: 15Peers.png
+
+slettede 1556. Graph: 15PeersAfterDeleting1698.png & 15PeersAfterDeleting1698 2.png
+
+
+Uden delay: 10 repair requests
+
+var _c1 = 15;
+var _c2 = 0;
+
+

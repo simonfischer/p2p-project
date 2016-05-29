@@ -241,7 +241,7 @@ function createNetwork(groupName){
 		if(ctrlPressed){
 			socket.emit('forceQuitNode', {node : (parseInt(params.nodes[0])-1000) })
 		}else{
-			$.post( "http://localhost:"+(parseInt(params.nodes[0])-1000)+"/chat/"+groupName+"/leave", { id : nodes[groupName].get(params.nodes[0]).label, ip : "localhost", port :  (parseInt(params.nodes[0])-1000)}, function( data ) {});
+			$.post( "http://localhost:"+(parseInt(params.nodes[0])-1000)+"/overlayNetwork/"+groupName+"/leave", { id : nodes[groupName].get(params.nodes[0]).label, ip : "localhost", port :  (parseInt(params.nodes[0])-1000)}, function( data ) {});
 		}
 
 	});

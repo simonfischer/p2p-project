@@ -199,10 +199,6 @@ function overlayNetwork(chordring, requests) {
 		if(typeof type == 'undefined'){
 			type="msg";
 		}
-		if(typeof response == 'string'){
-			console.log("response is a string containing: " + response)
-			//response = function(arg){}
-		}
 		if(typeof response == 'undefined'){
 			response = function(arg){}
 		}
@@ -317,16 +313,17 @@ function overlayNetwork(chordring, requests) {
 				var lastSeenPackage = _topicMessages[groupName].slice(-1)[0].currentPackageCount;
 
 				if((lastSeenPackage + 1) < currentPackageCount){
-					console.log("lastseen " + lastSeenPackage + " current: " + currentPackageCount)
 					repairNetwork(groupName, currentPackageCount);
 	
 				}
 				else if ((lastSeenPackage+1) == currentPackageCount){
 
+
 					_topicMessages[groupName].push(messageToChilden);
 		
 					// if there is a message handler associated with the group name, i.e. we're interested, pass the msg
 					_topicsList[groupName](groupName, msgToSend);
+					
 				}
 
 			}
@@ -428,7 +425,7 @@ function overlayNetwork(chordring, requests) {
 		var lastSeenPackage = _topicMessages[groupName].slice(-1)[0].currentPackageCount + 1;
 
 		var message = { startOfInterval: lastSeenPackage, endOfInterval: incommingPackage}
-
+		console.log("SEND REPAIR REQUEST i am " + _chordring.get_this().id)
 		requests.postRequest(rootNode, '/overlayNetwork/'+ groupName +'/multicast', 
 			{ msg : message, peer : _chordring.get_this(), type : "repairRequest"},
 
@@ -693,11 +690,12 @@ function overlayNetwork(chordring, requests) {
 	var _lastHeartBeat = {};
 
 
-	var _c1 = 10;
-	var _c2 = 2;
+	var _c1 = 15;
+	var _c2 = 10;
 
 
 	function generateDelayTimer(groupName){
+
 		var level = _level[groupName];
 
 		if(typeof level == 'undefined'){

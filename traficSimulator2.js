@@ -1,7 +1,8 @@
 var io = require('socket.io-client');
 
-var numberOfPeers = 30;
+var numberOfPeers = 15;
 var numberOfRuns = 1;
+var name="test3";
 
 var sockets = [];
 var level = [];
@@ -34,16 +35,16 @@ for(i = 0; i < numberOfPeers; i++){
 }
 
 
-sockets[0].emit('create', { groupName : "test2"})
+sockets[0].emit('create', { groupName : name})
 
-
+var listeners = [];
 
 function joinGroup(i){
 	console.log(i)
-	sockets[i].emit('join', { groupName : "localhost:4000;test2"})
+	sockets[i].emit('join', { groupName : "localhost:4000;"+name})
 
+	listeners[i] = handleMessageI(i);
 	
-	sockets[i].on('newChatMessage', handleMessageI(i));
 	function handleMessageI(j){
 		function handleMessage(msg){ 
 			if(typeof currentLevel == "undefined"){
@@ -52,7 +53,10 @@ function joinGroup(i){
 			if(currentLevel == level[j]){
 
 				console.log(currentLevel + ", " + (Date.now() - msg.msg));
+			}else{
+				console.log("shouldnt happen")
 			}
+			sockets[j].removeListener('newChatMessage', listeners[j]);
 		}
 		return handleMessage;
 	}
@@ -62,7 +66,7 @@ function joinGroup(i){
 			joinGroup(i);
 		}, 300);
 	}else{
-		setTimeout(bloatWithMessages, 1000);
+		//setTimeout(bloatWithMessages, 1000);
 	}
 	
 }
@@ -72,7 +76,7 @@ function bloatWithMessages(){
 	for(j = 0; j < numberOfRuns; j++){
 		for(i = 0; i < numberOfPeers; i++){
 			console.log(" j : " + j + "    i : " + i)
-			sockets[i].emit('sendmsg', { msg : Date.now(), groupName : "localhost:4000;test2"})
+			sockets[i].emit('sendmsg', { msg : Date.now(), groupName : "localhost:4000;"+name})
 		}
 	}
 
@@ -93,18 +97,35 @@ stdin.addListener("data", function(d) {
     if(d.toString().trim() == "level"){
     	for(i = 0; i < numberOfPeers; i++){
 
-    		sockets[i].emit('level', {groupName : "localhost:4000;test2"})
+    		sockets[i].emit('level', {groupName : "localhost:4000;"+name})
     	}
+    }else if(d.toString().trim() == "simulate"){
+
+		sockets[0].emit('sendmsg', { msg : Date.now(), groupName : "localhost:4000;"+name})
+		sockets[0].emit('sendmsg', { msg : Date.now(), groupName : "localhost:4000;"+name})
+		sockets[0].emit('sendmsg', { msg : Date.now(), groupName : "localhost:4000;"+name})
+		sockets[0].emit('sendmsg', { msg : Date.now(), groupName : "localhost:4000;"+name})
+
     }else{
     	var levelToAsk = parseInt(d.toString().trim())
     	currentLevel = levelToAsk
+    	setTimeout(function(){
+    		console.log("timelaps done")
+    	}, 53)
     	for(i = 0; i < numberOfPeers; i++){
-    		if(level[i] == levelToAsk){
-    			sockets[i].emit('sendmsg', { msg : Date.now(), groupName : "localhost:4000;test2"})
+    		if(level[i] == currentLevel){
+    			sockets[i].on('newChatMessage', listeners[i])
+    		}
+    	}
+    	for(i = 0; i < numberOfPeers; i++){
+    		if(level[i] == 1){
+    			sockets[i].emit('sendmsg', { msg : Date.now(), groupName : "localhost:4000;"+name})
     		}
     	}
 
     }
 });
+
+
 
 
